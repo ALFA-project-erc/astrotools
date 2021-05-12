@@ -1,5 +1,13 @@
 <template>
-  <q-form @submit="onSubmit">
+  <q-form
+    @submit="
+      $emit('submit', {
+        day: dayModel,
+        month: monthModel,
+        year: yearModel,
+      })
+    "
+  >
     <div class="q-gutter-sm row">
       <q-input
         label="Year"
@@ -7,6 +15,8 @@
         type="number"
         filled
         style="max-width: 100px"
+        lazy-rules
+        :rules="[(val) => val !== null || 'You must enter a valid year']"
       />
       <q-input
         label="Month"
@@ -14,6 +24,13 @@
         type="number"
         filled
         style="max-width: 100px"
+        min="1"
+        max="12"
+        :rules="[
+          (val) =>
+            (val !== null && val > 0 && val <= 12) ||
+            'You must enter a valid month',
+        ]"
       />
       <q-input
         label="Day"
@@ -21,35 +38,42 @@
         type="number"
         filled
         style="max-width: 100px"
+        min="1"
+        max="31"
+        :rules="[
+          (val) =>
+            (val !== null && val > 0 && val <= 31) ||
+            'You must enter a valid day',
+        ]"
       />
-      <q-btn label="Submit" type="submit" color="primary" />
+      <q-btn :disable="disabled" label="Submit" type="submit" color="primary" />
     </div>
   </q-form>
 </template>
 
 <script lang="ts">
-import { Ref, ref } from "vue";
+import { defineComponent, Ref, ref } from "vue";
 
-export default {
-  setup(): {
-    dayModel: Ref<number>;
-    monthModel: Ref<number>;
-    yearModel: Ref<number>;
-    onSubmit: () => void;
-  } {
-    const dayModel = ref(1);
-    const monthModel = ref(1);
-    const yearModel = ref(0);
+export default defineComponent({
+  name: "JulianDatePicker",
+  props: ["disabled"],
+  emits: {
+    submit: (data: {
+      day: number | null;
+      month: number | null;
+      year: number | null;
+    }) => {
+      return data.day !== null && data.month !== null && data.year !== null;
+    },
+  },
+  data() {
     return {
-      dayModel,
-      monthModel,
-      yearModel,
-      onSubmit() {
-        console.log(dayModel.value, monthModel.value, yearModel.value);
-      },
+      dayModel: ref(null) as Ref<number | null>,
+      monthModel: ref(null) as Ref<number | null>,
+      yearModel: ref(null) as Ref<number | null>,
     };
   },
-};
+});
 </script>
 
 <style scoped>
