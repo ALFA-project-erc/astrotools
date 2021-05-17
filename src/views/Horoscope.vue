@@ -1,5 +1,4 @@
 <template>
-  <JulianDatePicker :disabled="loading" @submit="onSubmit" />
   <q-card class="my-card">
     <q-card-section>
       <div class="text-h6">Horoscope</div>
@@ -7,13 +6,13 @@
     <q-card-section class="row">
       <q-card-section class="col">
         <PositionDisplay
-          :loading="loading"
+          :loading="loading < 8"
           :planetPositions="positionParts[0]"
         />
       </q-card-section>
       <q-card-section class="col">
         <PositionDisplay
-          :loading="loading"
+          :loading="loading < 8"
           :planetPositions="positionParts[1]"
         />
       </q-card-section>
@@ -26,11 +25,20 @@
 
         <q-item-section>
           <q-item-label> Ascendant </q-item-label>
-          <q-item-label caption v-if="!loading">{{ ascendant }}</q-item-label>
+          <q-item-label caption v-if="loading == 8">{{
+            ascendant
+          }}</q-item-label>
           <q-skeleton type="text" v-else square height="18px" />
         </q-item-section>
       </q-item>
     </q-card-section>
+    <q-card-actions align="center">
+      <JulianDatePicker
+        :loading="loading < 8"
+        :percentage="(loading / 8) * 100"
+        @submit="onSubmit"
+      />
+    </q-card-actions>
   </q-card>
 </template>
 
@@ -48,7 +56,7 @@ Object.values(Planet).forEach((planet) => {
   positions[planet] = "";
 });
 const ascendant = "";
-const loading = false;
+const loading = 8;
 
 export default defineComponent({
   name: "Horoscope",
@@ -58,23 +66,26 @@ export default defineComponent({
   },
   methods: {
     async onSubmit(event: { day: number; month: number; year: number }) {
-      this.loading = true;
+      this.loading = 0;
       const ascendantPromise = getAscendant(event);
-      await Promise.all(
+      const allPromises = Promise.all(
         Object.values(Planet).map(async (planet) => {
           try {
             this.positions[planet] = await getTruePosition(planet, event);
           } catch (error) {
             this.positions[planet] = "ERROR";
           }
+          this.loading += 1;
         })
       );
       try {
         this.ascendant = await ascendantPromise;
+        this.loading += 1;
       } catch (error) {
         this.ascendant = "ERROR";
       }
-      this.loading = false;
+      await allPromises;
+      this.loading = 8;
     },
   },
   computed: {
@@ -83,7 +94,7 @@ export default defineComponent({
       { planet: string; position: string }[]
     ] {
       const arr = Object.entries(this.positions)
-        .sort((a, b) => (a > b ? 1 : -1))
+        .sort()
         .map((entry) => ({
           planet: entry[0],
           position: entry[1],

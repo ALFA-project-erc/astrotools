@@ -19,7 +19,14 @@ import { defineComponent } from "vue";
 
 export default defineComponent({
   name: "PositionDisplay",
-  props: ["planetPositions", "loading"],
+  props: {
+    planetPositions: {
+      type: Object,
+      validator: (props: { planet: string; position: string }[]) =>
+        props.every((val) => "planet" in val && "position" in val),
+    },
+    loading: Boolean,
+  },
 
   methods: {
     camelCase(val: string) {

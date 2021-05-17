@@ -1,62 +1,60 @@
 <template>
-  <q-form
-    @submit="
-      $emit('submit', {
-        day: dayModel,
-        month: monthModel,
-        year: yearModel,
-      })
-    "
-  >
-    <div class="q-gutter-sm row">
+  <q-form class="row" @submit="$emit('submit', { ...ymd })">
+    <div class="row q-gutter-sm">
       <q-input
         label="Year"
-        v-model.number="yearModel"
+        v-model.number="ymd.year"
         type="number"
         filled
-        style="max-width: 100px"
         lazy-rules
-        :rules="[(val) => val !== null || 'You must enter a valid year']"
+        :rules="[(val) => val !== null || 'Invalid']"
       />
       <q-input
         label="Month"
-        v-model.number="monthModel"
+        v-model.number="ymd.month"
         type="number"
         filled
-        style="max-width: 100px"
         min="1"
         max="12"
-        :rules="[
-          (val) =>
-            (val !== null && val > 0 && val <= 12) ||
-            'You must enter a valid month',
-        ]"
+        :rules="[(val) => (val !== null && val > 0 && val <= 12) || 'Invalid']"
       />
       <q-input
         label="Day"
-        v-model.number="dayModel"
+        v-model.number="ymd.day"
         type="number"
         filled
-        style="max-width: 100px"
         min="1"
         max="31"
-        :rules="[
-          (val) =>
-            (val !== null && val > 0 && val <= 31) ||
-            'You must enter a valid day',
-        ]"
+        :rules="[(val) => (val !== null && val > 0 && val <= 31) || 'Invalid']"
       />
-      <q-btn :disable="disabled" label="Submit" type="submit" color="primary" />
+    </div>
+    <q-separator vertical dark size="5px" />
+    <div class="col">
+      <q-btn
+        :loading="loading"
+        :percentage="percentage"
+        label="Submit"
+        type="submit"
+        color="primary"
+      />
     </div>
   </q-form>
+      JDN : <q-badge>{{ jdn }}</q-badge>
 </template>
 
 <script lang="ts">
+import { ymdToJdn } from "@/kanon-api";
 import { defineComponent, Ref, ref } from "vue";
+
+const ymd = {
+  day: ref(null) as Ref<number | null>,
+  month: ref(null) as Ref<number | null>,
+  year: ref(null) as Ref<number | null>,
+};
 
 export default defineComponent({
   name: "JulianDatePicker",
-  props: ["disabled"],
+  props: { loading: Boolean, percentage: Number },
   emits: {
     submit: (data: {
       day: number | null;
@@ -68,16 +66,31 @@ export default defineComponent({
   },
   data() {
     return {
-      dayModel: ref(null) as Ref<number | null>,
-      monthModel: ref(null) as Ref<number | null>,
-      yearModel: ref(null) as Ref<number | null>,
+      ymd,
+      jdn: null as number | null,
     };
+  },
+  watch: {
+    ymd: {
+      async handler(val) {
+        if (val.day === null || val.month === null || val.year === null) return;
+        try {
+          this.jdn = await ymdToJdn("Julian A.D.", val);
+        } catch (error) {
+          this.jdn = null;
+        }
+      },
+      deep: true,
+    },
   },
 });
 </script>
 
 <style scoped>
-.q-form {
+/* .q-form {
   margin: 20px;
+} */
+.q-input {
+  max-width: 120px;
 }
 </style>

@@ -5,6 +5,7 @@ const BASE_URL = "http://localhost:8000";
 
 export const kanonClient = axios.create({
   baseURL: BASE_URL,
+  timeout: 10000,
 });
 
 type BasedQuantityResponse = {
@@ -12,9 +13,16 @@ type BasedQuantityResponse = {
   unit: string;
 };
 
+type DateResponse = {
+  date: string;
+  ymd: [number, number, number];
+};
+
+type YMD = { day: number; month: number; year: number };
+
 export const getTruePosition = async (
   planet: Planet,
-  date: { day: number; month: number; year: number }
+  date: YMD
 ): Promise<string> => {
   const response = (
     await kanonClient.get<BasedQuantityResponse>(
@@ -25,15 +33,35 @@ export const getTruePosition = async (
   return response.value;
 };
 
-export const getAscendant = async (date: {
-  day: number;
-  month: number;
-  year: number;
-}): Promise<string> => {
+export const getAscendant = async (date: YMD): Promise<string> => {
   const response = (
     await kanonClient.get<BasedQuantityResponse>(`ephemerides/ascendant/`, {
       params: date,
     })
   ).data;
   return response.value;
+};
+
+export const jdnToYmd = async (
+  jdn: number,
+  calendar: string
+): Promise<DateResponse> => {
+  const response = (
+    await kanonClient.get<DateResponse>(`calendars/${calendar}/from_jdn`, {
+      params: { jdn },
+    })
+  ).data;
+  return response;
+};
+
+export const ymdToJdn = async (
+  calendar: string,
+  date: YMD
+): Promise<number> => {
+  const response = (
+    await kanonClient.get<{ jdn: number }>(`calendars/${calendar}/to_jdn`, {
+      params: date,
+    })
+  ).data;
+  return response.jdn;
 };
