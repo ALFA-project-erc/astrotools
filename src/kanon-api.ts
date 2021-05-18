@@ -43,8 +43,8 @@ export const getAscendant = async (date: YMD): Promise<string> => {
 };
 
 export const jdnToYmd = async (
-  jdn: number,
-  calendar: string
+  calendar: string,
+  jdn: number
 ): Promise<DateResponse> => {
   const response = (
     await kanonClient.get<DateResponse>(`calendars/${calendar}/from_jdn`, {

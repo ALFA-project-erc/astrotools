@@ -25,9 +25,15 @@
 
         <q-item-section>
           <q-item-label> Ascendant </q-item-label>
-          <q-item-label caption v-if="loading == 8">{{
-            ascendant
-          }}</q-item-label>
+          <q-item-label caption v-if="loading == 8">
+            <SexaDegrees
+              :value="ascendant"
+              v-if="ascendant && ascendant !== 'ERROR'"
+            />
+            <div v-else style="color: red">
+              {{ ascendant }}
+            </div>
+          </q-item-label>
           <q-skeleton type="text" v-else square height="18px" />
         </q-item-section>
       </q-item>
@@ -45,9 +51,10 @@
 <script lang="ts">
 import JulianDatePicker from "@/components/JulianDatePicker.vue";
 import PositionDisplay from "@/components/PositionDisplay.vue";
+import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
 import { getAscendant, getTruePosition } from "@/kanon-api";
-import { defineComponent } from "vue";
+import { defineComponent, ref } from "vue";
 
 const positions: { [p in Planet]: string } = {} as {
   [p in Planet]: string;
@@ -55,12 +62,12 @@ const positions: { [p in Planet]: string } = {} as {
 Object.values(Planet).forEach((planet) => {
   positions[planet] = "";
 });
-const ascendant = "";
+const ascendant = ref("");
 const loading = 8;
 
 export default defineComponent({
   name: "Horoscope",
-  components: { JulianDatePicker, PositionDisplay },
+  components: { JulianDatePicker, PositionDisplay, SexaDegrees },
   data() {
     return { positions, ascendant, loading };
   },

@@ -7,7 +7,15 @@
 
       <q-item-section>
         <q-item-label>{{ camelCase(pp.planet) }}</q-item-label>
-        <q-item-label caption v-if="!loading">{{ pp.position }}</q-item-label>
+        <q-item-label caption v-if="!loading">
+          <SexaDegrees
+            :value="pp.position"
+            v-if="pp.position && pp.position !== 'ERROR'"
+          />
+          <div v-else style="color: red">
+            {{ pp.position }}
+          </div>
+        </q-item-label>
         <q-skeleton type="text" v-else square height="18px" />
       </q-item-section>
     </q-item>
@@ -16,8 +24,10 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
+import SexaDegrees from "./SexaDegrees.vue";
 
 export default defineComponent({
+  components: { SexaDegrees },
   name: "PositionDisplay",
   props: {
     planetPositions: {
