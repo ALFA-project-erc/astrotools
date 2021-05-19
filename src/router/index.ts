@@ -22,6 +22,11 @@ const routes: Array<RouteRecordRaw> = [
     component: () => import("../views/Horoscope.vue"),
   },
   {
+    path: "/ephemerides",
+    name: "Ephemerides",
+    component: () => import("../views/Ephemerides.vue"),
+  },
+  {
     path: "/calculator",
     name: "Calculator",
     component: () => import("../views/Calculator.vue"),

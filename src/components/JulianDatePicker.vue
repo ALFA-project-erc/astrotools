@@ -55,6 +55,7 @@
         label="Submit"
         type="submit"
         color="primary"
+        :disable="jdn === null"
       />
     </div>
   </q-form>
@@ -96,6 +97,7 @@ export default defineComponent({
   watch: {
     ymd: {
       async handler(val) {
+        this.jdn = null;
         if (
           !this.selectDate ||
           val.day === null ||
