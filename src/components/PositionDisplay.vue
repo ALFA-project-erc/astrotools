@@ -6,7 +6,7 @@
       </q-item-section>
 
       <q-item-section>
-        <q-item-label>{{ camelCase(pp.planet) }}</q-item-label>
+        <q-item-label>{{ capitalize(pp.planet) }}</q-item-label>
         <q-item-label caption v-if="!loading">
           <SexaDegrees
             :value="pp.position"
@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, capitalize } from "vue";
 import SexaDegrees from "./SexaDegrees.vue";
 
 export default defineComponent({
@@ -37,11 +37,8 @@ export default defineComponent({
     },
     loading: Boolean,
   },
-
   methods: {
-    camelCase(val: string) {
-      return val[0].toUpperCase() + val.slice(1).toLowerCase();
-    },
+    capitalize,
   },
 });
 </script>

@@ -1,19 +1,25 @@
 <template>
   <div class="q-pa-md">
-    <q-stepper v-model="step" vertical color="primary" animated header-nav>
+    <q-stepper v-model="step" color="primary" animated header-nav>
       <q-step
         :name="1"
-        :title="step1Title"
+        title="Celestial body"
+        :caption="step1Caption"
         icon="settings"
-        :done="body && step > 1"
+        :done="planet && step > 1"
       >
         Select your celestial body.
 
-        <q-select :options="cBodies" v-model="body"> </q-select>
+        <q-select
+          :options="cBodies"
+          :option-label="capitalize"
+          v-model="planet"
+        >
+        </q-select>
 
         <q-stepper-navigation>
           <q-btn
-            :disable="body === null"
+            :disable="planet === null"
             @click="step = 2"
             color="primary"
             label="Continue"
@@ -23,10 +29,11 @@
 
       <q-step
         :name="2"
-        :title="step2Title"
+        title="Starting date"
+        :caption="step2Caption"
         icon="create_new_folder"
         :done="step > 2"
-        :disable="!body"
+        :disable="!planet"
       >
         Select your starting date.
 
@@ -51,10 +58,11 @@
 
       <q-step
         :name="3"
-        :title="step3Title"
+        title="Options"
+        :caption="step3Caption"
         icon="assignment"
-        :done="step > 3"
-        :disable="!body || !date"
+        :done="positionData.length > 0"
+        :disable="!planet || !date"
       >
         Select the number of values and steps.
         <div class="row">
@@ -81,6 +89,7 @@
             @click="onCompute"
             color="primary"
             label="Compute"
+            :loading="loading"
           />
           <q-btn
             flat
@@ -93,60 +102,76 @@
       </q-step>
     </q-stepper>
 
-    <q-list>
-      <q-item v-for="posData in positionData" :key="posData.jdn">
-        {{ posData.jdn }} : <SexaDegrees :value="posData.position" />
-      </q-item>
+    <q-list dense bordered padding class="rounded-borders">
+      <div v-for="(posData, idx) in positionData" :key="posData.jdn">
+        <q-item>
+          <q-item-section side>
+            <q-item-label>
+              <JdnJulianDate :jdn="posData.jdn" />
+            </q-item-label>
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>
+              <SexaDegrees :value="posData.position" />
+            </q-item-label>
+          </q-item-section>
+        </q-item>
+        <q-separator v-if="idx < positionData.length - 1" />
+      </div>
     </q-list>
   </div>
 </template>
 
 <script lang="ts">
+import JdnJulianDate from "@/components/JdnJulianDate.vue";
 import JulianDatePicker from "@/components/JulianDatePicker.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
 import { getEphemerides, YMD } from "@/kanon-api";
-import { defineComponent, ref } from "vue";
+import { capitalize, defineComponent, ref } from "vue";
 
 export default defineComponent({
-  components: { JulianDatePicker, SexaDegrees },
+  components: { JulianDatePicker, SexaDegrees, JdnJulianDate },
   data() {
     return {
-      cBodies: ["Sun", "Moon", "Mars", "Venus", "Mercury", "Jupiter", "Saturn"],
-      body: ref<Planet | null>(null),
+      cBodies: Object.values(Planet),
+      planet: ref<Planet | null>(null),
       date: ref<YMD | null>(null),
       nValRef: ref(1),
       valStepRef: ref(1),
       step: ref(1),
       positionData: ref<{ jdn: number; position: string }[]>([]),
+      loading: false,
     };
   },
   methods: {
     onCompute() {
-      if (this.body && this.date)
-        getEphemerides(this.body.toLowerCase() as Planet, this.date, this.nVal, this.valStep)
+      if (this.planet && this.date) {
+        this.loading = true;
+        getEphemerides(this.planet, this.date, this.nVal, this.valStep)
           .then((val) => (this.positionData = val))
-          .catch((_) => (this.positionData = []));
+          .catch(() => (this.positionData = []))
+          .finally(() => (this.loading = false));
+      }
     },
+    capitalize,
   },
   computed: {
-    step1Title() {
-      let base = "Celestial body";
-      if (this.body !== null) {
-        base += `: ${this.body}`;
-      }
+    step1Caption() {
+      let base = "";
+      if (this.planet) base += `${capitalize(this.planet)}`;
       return base;
     },
-    step2Title() {
-      let base = "Starting date";
+    step2Caption() {
+      let base = "";
       if (this.date !== null) {
-        base += `: ${this.date.year}/${this.date.month}/${this.date.day}`;
+        base += `${this.date.year}/${this.date.month}/${this.date.day}`;
       }
       return base;
     },
-    step3Title() {
-      let base = `Options: `;
-      base += `Values (${this.valStep}) - Step (${this.nVal})`;
+    step3Caption() {
+      let base = "";
+      base += `Values (${this.nVal}) - Step (${this.valStep})`;
       return base;
     },
     valStep: {

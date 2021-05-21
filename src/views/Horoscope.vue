@@ -56,19 +56,16 @@ import { Planet } from "@/enums";
 import { getAscendant, getTruePosition } from "@/kanon-api";
 import { defineComponent, ref } from "vue";
 
-const positions: { [p in Planet]: string } = {} as {
-  [p in Planet]: string;
-};
-Object.values(Planet).forEach((planet) => {
-  positions[planet] = "";
-});
-const ascendant = ref("");
-const loading = 8;
-
 export default defineComponent({
   name: "Horoscope",
   components: { JulianDatePicker, PositionDisplay, SexaDegrees },
   data() {
+    const positions = new Map<Planet, string>();
+    Object.values(Planet).forEach((planet) => {
+      positions.set(planet, "");
+    });
+    const ascendant = ref("");
+    const loading = 8;
     return { positions, ascendant, loading };
   },
   methods: {
@@ -78,9 +75,9 @@ export default defineComponent({
       const allPromises = Promise.all(
         Object.values(Planet).map(async (planet) => {
           try {
-            this.positions[planet] = await getTruePosition(planet, event);
+            this.positions.set(planet, await getTruePosition(planet, event));
           } catch (error) {
-            this.positions[planet] = "ERROR";
+            this.positions.set(planet, "ERROR");
           }
           this.loading += 1;
         })
@@ -97,10 +94,10 @@ export default defineComponent({
   },
   computed: {
     positionParts(): [
-      { planet: string; position: string }[],
-      { planet: string; position: string }[]
+      { planet: Planet; position: string }[],
+      { planet: Planet; position: string }[]
     ] {
-      const arr = Object.entries(this.positions)
+      const arr = Array.from(this.positions)
         .sort()
         .map((entry) => ({
           planet: entry[0],

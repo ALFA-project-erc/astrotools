@@ -63,17 +63,7 @@
 
 <script lang="ts">
 import { jdnToYmd, ymdToJdn } from "@/kanon-api";
-import { defineComponent, Ref, ref } from "vue";
-
-const ymd = {
-  day: ref(null) as Ref<number | null>,
-  month: ref(null) as Ref<number | null>,
-  year: ref(null) as Ref<number | null>,
-};
-
-const jdn = ref(null) as Ref<number | null>;
-
-const selectDate = true;
+import { defineComponent, ref } from "vue";
 
 export default defineComponent({
   name: "JulianDatePicker",
@@ -89,9 +79,13 @@ export default defineComponent({
   },
   data() {
     return {
-      selectDate,
-      ymd,
-      jdn,
+      selectDate: true,
+      ymd: {
+        day: ref<number | null>(null),
+        month: ref<number | null>(null),
+        year: ref<number | null>(null),
+      },
+      jdn: ref<number | null>(null),
     };
   },
   watch: {
