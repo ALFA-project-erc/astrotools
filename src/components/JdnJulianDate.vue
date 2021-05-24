@@ -17,7 +17,7 @@ export default defineComponent({
   },
   data() {
     return {
-      show: 0,
+      show: 1,
       date: "",
       ymd: "",
     };
@@ -25,7 +25,13 @@ export default defineComponent({
   created() {
     jdnToYmd("Julian A.D.", this.jdn).then((res) => {
       this.date = res.date;
-      this.ymd = res.ymd.join("/");
+      this.ymd =
+        res.ymd[0].toString() +
+        "/" +
+        res.ymd
+          .slice(1, 3)
+          .map((v) => v.toString().padStart(2, "0"))
+          .join("/");
     });
   },
 });

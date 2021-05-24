@@ -8,10 +8,7 @@ export const kanonClient = axios.create({
   timeout: 10000,
 });
 
-type BasedQuantityResponse = {
-  value: string;
-  unit: string;
-};
+type TruePosResponse = { jdn: number; position: string }[];
 
 type DateResponse = {
   date: string;
@@ -25,12 +22,11 @@ export const getTruePosition = async (
   date: YMD
 ): Promise<string> => {
   const response = (
-    await kanonClient.get<BasedQuantityResponse>(
-      `ephemerides/${planet}/true_pos/`,
-      { params: date }
-    )
+    await kanonClient.get<TruePosResponse>(`ephemerides/${planet}/true_pos/`, {
+      params: date,
+    })
   ).data;
-  return response.value;
+  return response[0].position;
 };
 
 export const getEphemerides = async (
@@ -38,25 +34,22 @@ export const getEphemerides = async (
   date: YMD,
   nVal: number,
   step: number
-): Promise<{ jdn: number; position: string }[]> => {
+): Promise<TruePosResponse> => {
   const response = (
-    await kanonClient.get<{ jdn: number; position: string }[]>(
-      `ephemerides/${planet}/ephemerides/`,
-      {
-        params: {
-          ...date,
-          number_of_values: nVal,
-          step,
-        },
-      }
-    )
+    await kanonClient.get<TruePosResponse>(`ephemerides/${planet}/true_pos/`, {
+      params: {
+        ...date,
+        number_of_values: nVal,
+        step,
+      },
+    })
   ).data;
   return response;
 };
 
 export const getAscendant = async (date: YMD): Promise<string> => {
   const response = (
-    await kanonClient.get<BasedQuantityResponse>(`ephemerides/ascendant/`, {
+    await kanonClient.get<{ value: string }>(`ephemerides/ascendant/`, {
       params: date,
     })
   ).data;
@@ -68,7 +61,7 @@ export const jdnToYmd = async (
   jdn: number
 ): Promise<DateResponse> => {
   const response = (
-    await kanonClient.get<DateResponse>(`calendars/${calendar}/from_jdn`, {
+    await kanonClient.get<DateResponse>(`calendars/${calendar}/from_jdn/`, {
       params: { jdn },
     })
   ).data;
@@ -80,7 +73,7 @@ export const ymdToJdn = async (
   date: YMD
 ): Promise<number> => {
   const response = (
-    await kanonClient.get<{ jdn: number }>(`calendars/${calendar}/to_jdn`, {
+    await kanonClient.get<{ jdn: number }>(`calendars/${calendar}/to_jdn/`, {
       params: date,
     })
   ).data;
