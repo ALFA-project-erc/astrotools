@@ -1,6 +1,6 @@
 <template>
   <div class="q-pa-md">
-    <q-stepper v-model="step" color="primary" animated header-nav>
+    <q-stepper v-model="step" vertical color="primary" animated header-nav>
       <q-step
         :name="1"
         title="Celestial body"
@@ -32,7 +32,7 @@
         title="Starting date"
         :caption="step2Caption"
         icon="create_new_folder"
-        :done="step > 2"
+        :done="date !== null"
         :disable="!planet"
       >
         Select your starting date.
@@ -102,23 +102,24 @@
       </q-step>
     </q-stepper>
 
-    <q-list dense bordered padding class="rounded-borders">
-      <div v-for="(posData, idx) in positionData" :key="posData.jdn">
-        <q-item>
-          <q-item-section side>
-            <q-item-label>
-              <JdnJulianDate :jdn="posData.jdn" />
-            </q-item-label>
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>
-              <SexaDegrees :value="posData.position" />
-            </q-item-label>
-          </q-item-section>
-        </q-item>
-        <q-separator v-if="idx < positionData.length - 1" />
-      </div>
-    </q-list>
+    <q-markup-table>
+      <thead>
+        <tr>
+          <th class="text-left">Date</th>
+          <th class="text-right">Ancient Position</th>
+          <th class="text-right">IMCCE Position</th>
+          <th class="text-right">Difference</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="posData in positionData" :key="posData.jdn">
+          <td class="text-left"><JdnJulianDate :jdn="posData.jdn" /></td>
+          <td class="text-right"><SexaDegrees :value="posData.position" /></td>
+          <td class="text-right"><SexaDegrees :v-if="posData.imcce !== undefined" :value="posData.imcce" /></td>
+          <td class="text-right"><SexaDegrees :v-if="posData.diff !== undefined" :value="posData.diff" /></td>
+        </tr>
+      </tbody>
+    </q-markup-table>
   </div>
 </template>
 
@@ -127,7 +128,7 @@ import JdnJulianDate from "@/components/JdnJulianDate.vue";
 import JulianDatePicker from "@/components/JulianDatePicker.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
-import { getEphemerides, YMD } from "@/kanon-api";
+import { EphemeridesResponse, getEphemerides, YMD } from "@/kanon-api";
 import { capitalize, defineComponent, ref } from "vue";
 
 export default defineComponent({
@@ -140,19 +141,29 @@ export default defineComponent({
       nValRef: ref(1),
       valStepRef: ref(1),
       step: ref(1),
-      positionData: ref<{ jdn: number; position: string }[]>([]),
+      positionData: ref<EphemeridesResponse>([]),
       loading: false,
     };
   },
   methods: {
-    onCompute() {
+    async onCompute(): Promise<void> {
       if (this.planet && this.date) {
         this.loading = true;
-        getEphemerides(this.planet, this.date, this.nVal, this.valStep)
-          .then((val) => (this.positionData = val))
-          .catch(() => (this.positionData = []))
-          .finally(() => (this.loading = false));
+        try {
+          this.positionData = await getEphemerides(
+            this.planet,
+            this.date,
+            this.nVal,
+            this.valStep
+          );
+        } catch (error) {
+          this.positionData = [];
+        }
+        this.loading = false;
       }
+    },
+    async test() {
+      return 1;
     },
     capitalize,
   },
@@ -179,7 +190,7 @@ export default defineComponent({
         return this.valStepRef;
       },
       set(val) {
-        if (val > 1) this.valStepRef = val;
+        if (val >= 1) this.valStepRef = val;
       },
     },
     nVal: {
