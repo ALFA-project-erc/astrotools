@@ -1,59 +1,133 @@
 <template>
-  <q-form @submit="onSubmit">
-    <div class="q-gutter-sm row">
+  <q-form class="row" @submit="$emit('submit', { ...ymd })">
+    <div class="row q-gutter-sm" v-if="selectDate">
       <q-input
         label="Year"
-        v-model.number="yearModel"
+        v-model.number="ymd.year"
+        debounce="500"
         type="number"
         filled
-        style="max-width: 100px"
+        lazy-rules
+        :rules="[(val) => val !== null || 'Invalid']"
       />
       <q-input
         label="Month"
-        v-model.number="monthModel"
+        v-model.number="ymd.month"
         type="number"
+        debounce="500"
         filled
-        style="max-width: 100px"
+        min="1"
+        max="12"
+        :rules="[(val) => (val !== null && val > 0 && val <= 12) || 'Invalid']"
       />
       <q-input
         label="Day"
-        v-model.number="dayModel"
+        v-model.number="ymd.day"
+        type="number"
+        debounce="500"
+        filled
+        min="1"
+        max="31"
+        :rules="[(val) => (val !== null && val > 0 && val <= 31) || 'Invalid']"
+      />
+    </div>
+    <div v-else>
+      <q-input
+        debounce="500"
+        label="JDN"
+        v-model.number="jdn"
         type="number"
         filled
-        style="max-width: 100px"
+        lazy-rules
+        :rules="[(val) => val !== null || 'Invalid']"
       />
-      <q-btn label="Submit" type="submit" color="primary" />
+    </div>
+    <q-separator vertical dark size="5px" />
+    <div class="column q-gutter-sm">
+      <q-btn
+        :label="selectDate ? 'To JDN' : 'To Date'"
+        color="secondary"
+        @click="selectDate = !selectDate"
+      />
+      <q-btn
+        :loading="loading"
+        :percentage="percentage"
+        label="Submit"
+        type="submit"
+        color="primary"
+        :disable="jdn === null"
+      />
     </div>
   </q-form>
 </template>
 
 <script lang="ts">
-import { Ref, ref } from "vue";
+import { jdnToYmd, ymdToJdn } from "@/kanon-api";
+import { defineComponent, ref } from "vue";
 
-export default {
-  setup(): {
-    dayModel: Ref<number>;
-    monthModel: Ref<number>;
-    yearModel: Ref<number>;
-    onSubmit: () => void;
-  } {
-    const dayModel = ref(1);
-    const monthModel = ref(1);
-    const yearModel = ref(0);
+export default defineComponent({
+  name: "JulianDatePicker",
+  props: { loading: Boolean, percentage: Number },
+  emits: {
+    submit: (data: {
+      day: number | null;
+      month: number | null;
+      year: number | null;
+    }) => {
+      return data.day !== null && data.month !== null && data.year !== null;
+    },
+  },
+  data() {
     return {
-      dayModel,
-      monthModel,
-      yearModel,
-      onSubmit() {
-        console.log(dayModel.value, monthModel.value, yearModel.value);
+      selectDate: true,
+      ymd: {
+        day: ref<number | null>(null),
+        month: ref<number | null>(null),
+        year: ref<number | null>(null),
       },
+      jdn: ref<number | null>(null),
     };
   },
-};
+  watch: {
+    ymd: {
+      async handler(val) {
+        if (
+          !this.selectDate ||
+          val.day === null ||
+          val.month === null ||
+          val.year === null
+        )
+          return;
+        this.jdn = null;
+        try {
+          this.jdn = await ymdToJdn("Julian A.D.", val);
+        } catch (error) {
+          if (val == this.ymd) this.jdn = null;
+        }
+      },
+      immediate: true,
+      deep: true,
+    },
+    async jdn(val) {
+      if (this.selectDate || val === null) return;
+      let ymd: [number | null, number | null, number | null];
+      try {
+        ymd = (await jdnToYmd("Julian A.D.", val)).ymd;
+      } catch (error) {
+        ymd = [null, null, null];
+      }
+      if (val == this.jdn) {
+        this.ymd.day = ymd[2];
+        this.ymd.month = ymd[1];
+        this.ymd.year = ymd[0];
+      }
+    },
+  },
+});
 </script>
 
 <style scoped>
-.q-form {
-  margin: 20px;
+.q-input {
+  max-width: 120px;
 }
 </style>
