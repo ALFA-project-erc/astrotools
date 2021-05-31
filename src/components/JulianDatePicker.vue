@@ -91,7 +91,6 @@ export default defineComponent({
   watch: {
     ymd: {
       async handler(val) {
-        this.jdn = null;
         if (
           !this.selectDate ||
           val.day === null ||
@@ -99,12 +98,14 @@ export default defineComponent({
           val.year === null
         )
           return;
+        this.jdn = null;
         try {
           this.jdn = await ymdToJdn("Julian A.D.", val);
         } catch (error) {
-          this.jdn = null;
+          if (val == this.ymd) this.jdn = null;
         }
       },
+      immediate: true,
       deep: true,
     },
     async jdn(val) {
@@ -115,18 +116,17 @@ export default defineComponent({
       } catch (error) {
         ymd = [null, null, null];
       }
-      this.ymd.day = ymd[2];
-      this.ymd.month = ymd[1];
-      this.ymd.year = ymd[0];
+      if (val == this.jdn) {
+        this.ymd.day = ymd[2];
+        this.ymd.month = ymd[1];
+        this.ymd.year = ymd[0];
+      }
     },
   },
 });
 </script>
 
 <style scoped>
-/* .q-form {
-  margin: 20px;
-} */
 .q-input {
   max-width: 120px;
 }

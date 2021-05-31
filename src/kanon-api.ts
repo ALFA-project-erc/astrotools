@@ -110,10 +110,11 @@ export const imccePosition = async (
   step: number
 ) => {
   const baseURL =
-    "https://ssp.imcce.fr/webservices/miriade/api/ephemcc.php?-rplane=2&-mime=json&-teph=2&-theory=DE406&";
+    "https://ssp.imcce.fr/webservices/miriade/api/ephemcc.php?" +
+    "-rplane=2&-mime=json&-teph=2&-theory=DE406&-observer=990&";
   const options = `-name=${planet}&-type=${
     planet == Planet.Sun ? "star" : "planet"
-  }&-ep=${jdn}&-nbd=${nVal}&-step=${step}d`;
+  }&-ep=${jdn-1}&-nbd=${nVal}&-step=${step}d`;
 
   const response = await axios.get<{
     data: { Date: string; Longitude: string }[];
@@ -129,10 +130,10 @@ const imcceLatToSexa = (str: string) => {
     Math.round(Number.parseFloat(parts[2])),
   ];
 
-  if(floatPart[1] == 60){
+  if (floatPart[1] == 60) {
     floatPart[0] += 1;
-    floatPart[1] = 0
-}
+    floatPart[1] = 0;
+  }
   const pad = (v: number) => v.toString().padStart(2, "0");
 
   return `${pad(Math.floor(intPart / 60))},${pad(intPart % 60)} ; ${floatPart
@@ -142,9 +143,12 @@ const imcceLatToSexa = (str: string) => {
 
 export const getCalcCompute = async (query: string, radix: string) => {
   const response = (
-    await kanonClient.get<{ result: string }>(`calculations/${radix}/compute`, {
-      params: { query },
-    })
+    await kanonClient.get<{ result: string }>(
+      `calculations/${radix}/compute/`,
+      {
+        params: { query },
+      }
+    )
   ).data;
   return response.result;
 };

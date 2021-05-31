@@ -1,6 +1,6 @@
 <template>
   <div class="q-pa-md">
-    <q-stepper v-model="step" vertical color="primary" animated header-nav>
+    <q-stepper keep-alive v-model="step" color="primary" animated>
       <q-step
         :name="1"
         title="Celestial body"
@@ -64,41 +64,43 @@
         :done="positionData.length > 0"
         :disable="!planet || !date"
       >
-        Select the number of values and steps.
-        <div class="row">
-          <q-input
-            label="Number of values"
-            v-model.number="nVal"
-            type="number"
-            filled
-            min="1"
-            :rules="[(val) => val >= 1 || 'Invalid']"
-          />
-          <q-input
-            label="Step"
-            v-model.number="valStep"
-            type="number"
-            filled
-            min="1"
-            :rules="[(val) => val >= 1 || 'Invalid']"
-          />
+        <div>
+          Select the number of values and steps.
+          <div class="row">
+            <q-input
+              label="Number of values"
+              v-model.number="nVal"
+              type="number"
+              filled
+              min="1"
+              :rules="[(val) => val >= 1 || 'Invalid']"
+            />
+            <q-input
+              label="Step"
+              v-model.number="valStep"
+              type="number"
+              filled
+              min="1"
+              :rules="[(val) => val >= 1 || 'Invalid']"
+            />
+          </div>
+          <q-stepper-navigation>
+            <q-btn
+              :disable="step === null || nVal === null"
+              @click="onCompute"
+              color="primary"
+              label="Compute"
+              :loading="loading"
+            />
+            <q-btn
+              flat
+              @click="step = 2"
+              color="primary"
+              label="Back"
+              class="q-ml-sm"
+            />
+          </q-stepper-navigation>
         </div>
-        <q-stepper-navigation>
-          <q-btn
-            :disable="step === null || nVal === null"
-            @click="onCompute"
-            color="primary"
-            label="Compute"
-            :loading="loading"
-          />
-          <q-btn
-            flat
-            @click="step = 2"
-            color="primary"
-            label="Back"
-            class="q-ml-sm"
-          />
-        </q-stepper-navigation>
       </q-step>
     </q-stepper>
 
@@ -106,8 +108,8 @@
       <thead>
         <tr>
           <th class="text-left">Date</th>
-          <th class="text-right">Ancient Position</th>
-          <th class="text-right">IMCCE Position</th>
+          <th class="text-right">Historical</th>
+          <th class="text-right">IMCCE</th>
           <th class="text-right">Difference</th>
         </tr>
       </thead>
@@ -115,12 +117,31 @@
         <tr v-for="posData in positionData" :key="posData.jdn">
           <td class="text-left"><JdnJulianDate :jdn="posData.jdn" /></td>
           <td class="text-right"><SexaDegrees :value="posData.position" /></td>
-          <td class="text-right"><SexaDegrees :v-if="posData.imcce !== undefined" :value="posData.imcce" /></td>
-          <td class="text-right"><SexaDegrees :v-if="posData.diff !== undefined" :value="posData.diff" /></td>
+          <td class="text-right">
+            <SexaDegrees
+              :v-if="posData.imcce !== undefined"
+              :value="posData.imcce"
+            />
+          </td>
+          <td class="text-right">
+            <SexaDegrees
+              :v-if="posData.diff !== undefined"
+              :value="posData.diff"
+            />
+          </td>
         </tr>
       </tbody>
     </q-markup-table>
   </div>
+  <q-page-sticky position="bottom-right" :offset="[18, 18]">
+    <q-btn
+      @click="exportCSV()"
+      fab
+      icon="add"
+      color="primary"
+      v-if="positionData.length > 0"
+    />
+  </q-page-sticky>
 </template>
 
 <script lang="ts">
@@ -162,10 +183,20 @@ export default defineComponent({
         this.loading = false;
       }
     },
-    async test() {
-      return 1;
-    },
     capitalize,
+    exportCSV() {
+      const csv =
+        "date,position\n" +
+        this.positionData.map((v) => `${v.jdn},"${v.position}"`).join("\n");
+      const blob = new Blob([csv], {
+        type: "text/csv;charset=utf-8;",
+      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "export";
+      link.click();
+      URL.revokeObjectURL(link.href);
+    },
   },
   computed: {
     step1Caption() {
@@ -182,7 +213,7 @@ export default defineComponent({
     },
     step3Caption() {
       let base = "";
-      base += `Values (${this.nVal}) - Step (${this.valStep})`;
+      base += `Values : ${this.nVal} | Step : ${this.valStep}`;
       return base;
     },
     valStep: {
