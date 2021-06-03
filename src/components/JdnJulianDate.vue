@@ -25,17 +25,22 @@ export default defineComponent({
   watch: {
     jdn: {
       async handler(val) {
-        const res = await jdnToYmd("Julian A.D.", val);
-        this.date = res.date;
-        this.ymd =
-          res.ymd[0].toString() +
-          "/" +
-          res.ymd
-            .slice(1, 3)
-            .map((v) => v.toString().padStart(2, "0"))
-            .join("/");
+        try {
+          const res = await jdnToYmd("Julian A.D.", val);
+          this.date = res.date;
+          this.ymd =
+            res.ymd[0].toString() +
+            "/" +
+            res.ymd
+              .slice(1, 3)
+              .map((v) => v.toString().padStart(2, "0"))
+              .join("/");
+        } catch (error) {
+          this.date = "";
+          this.ymd = "";
+        }
       },
-      immediate: true
+      immediate: true,
     },
   },
 });
