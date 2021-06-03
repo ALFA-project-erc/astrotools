@@ -1,16 +1,14 @@
 import axios from "axios";
 import { Planet } from "./enums";
 
-const BASE_URL = "http://localhost:8000";
-
 export const kanonClient = axios.create({
-  baseURL: BASE_URL,
+  baseURL: process.env.VUE_APP_KANON_API,
   timeout: 10000,
 });
 
-type TruePosResponse = { jdn: number; position: string }[];
+export type TruePosResponse = { jdn: number; position: string }[];
 
-type DateResponse = {
+export type DateResponse = {
   date: string;
   ymd: [number, number, number];
 };
@@ -108,13 +106,19 @@ export const imccePosition = async (
   jdn: number,
   nVal: number,
   step: number
-) => {
+): Promise<
+  {
+    Date: string;
+    Longitude: string;
+  }[]
+> => {
+  const toledoDiff = 0.011;
   const baseURL =
     "https://ssp.imcce.fr/webservices/miriade/api/ephemcc.php?" +
-    "-rplane=2&-mime=json&-teph=2&-theory=DE406&-observer=990&";
+    "-rplane=2&-mime=json&-teph=2&-theory=DE406&";
   const options = `-name=${planet}&-type=${
     planet == Planet.Sun ? "star" : "planet"
-  }&-ep=${jdn-1}&-nbd=${nVal}&-step=${step}d`;
+  }&-ep=${jdn + toledoDiff}&-nbd=${nVal}&-step=${step}d`;
 
   const response = await axios.get<{
     data: { Date: string; Longitude: string }[];
@@ -141,7 +145,10 @@ const imcceLatToSexa = (str: string) => {
     .join(",")}`;
 };
 
-export const getCalcCompute = async (query: string, radix: string) => {
+export const getCalcCompute = async (
+  query: string,
+  radix: string
+): Promise<string> => {
   const response = (
     await kanonClient.get<{ result: string }>(
       `calculations/${radix}/compute/`,

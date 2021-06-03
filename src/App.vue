@@ -1,8 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-drawer show-if-above side="left" bordered>
-      <VerticalTab></VerticalTab>
-    </q-drawer>
+    <q-drawer show-if-above side="left" bordered> <VerticalTab /> </q-drawer>
 
     <q-page-container class="margin">
       <router-view v-slot="{ Component }">
