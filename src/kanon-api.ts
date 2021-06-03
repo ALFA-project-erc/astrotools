@@ -159,3 +159,22 @@ export const getCalcCompute = async (
   ).data;
   return response.result;
 };
+
+type OpenAPISchema = {
+  components: {
+    schemas: {
+      SupportedRadices: { enum: string[] };
+      SupportedCalendars: { enum: string[] };
+      Planet: { enum: string[] };
+    };
+  };
+};
+
+let kanonSchema: OpenAPISchema | null = null;
+
+export const getOpenAPISchema = async (): Promise<OpenAPISchema> => {
+  if (!kanonSchema) {
+    kanonSchema = (await kanonClient.get<OpenAPISchema>("openapi.json")).data;
+  }
+  return kanonSchema;
+};
