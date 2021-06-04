@@ -1,5 +1,5 @@
 <template>
-  <q-form class="row" @submit="$emit('submit', { ...ymd })">
+  <q-form class="row" @submit="$emit('submit', { ...ymd, jdn })">
     <div class="row q-gutter-sm" v-if="selectDate">
       <q-input
         label="Year"
@@ -17,8 +17,10 @@
         debounce="500"
         filled
         min="1"
-        max="12"
-        :rules="[(val) => (val !== null && val > 0 && val <= 12) || 'Invalid']"
+        :max="maxMonth"
+        :rules="[
+          (val) => (val !== null && val > 0 && val <= maxMonth) || 'Invalid',
+        ]"
       />
       <q-input
         label="Day"
@@ -27,8 +29,10 @@
         debounce="500"
         filled
         min="1"
-        max="31"
-        :rules="[(val) => (val !== null && val > 0 && val <= 31) || 'Invalid']"
+        :max="maxDays"
+        :rules="[
+          (val) => (val !== null && val > 0 && val <= maxDays) || 'Invalid',
+        ]"
       />
     </div>
     <div v-else>
@@ -66,8 +70,14 @@ import { jdnToYmd, ymdToJdn } from "@/kanon-api";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
-  name: "JulianDatePicker",
-  props: { loading: Boolean, percentage: Number },
+  name: "DatePicker",
+  props: {
+    loading: Boolean,
+    percentage: Number,
+    calendar: { type: String, required: true },
+    maxDays: { type: Number, required: true },
+    maxMonth: { type: Number, required: true },
+  },
   emits: {
     submit: (data: {
       day: number | null;
@@ -100,7 +110,7 @@ export default defineComponent({
           return;
         this.jdn = null;
         try {
-          this.jdn = await ymdToJdn("Julian A.D.", val);
+          this.jdn = await ymdToJdn(this.calendar, val);
         } catch (error) {
           if (val == this.ymd) this.jdn = null;
         }
@@ -112,7 +122,7 @@ export default defineComponent({
       if (this.selectDate || val === null) return;
       let ymd: [number | null, number | null, number | null];
       try {
-        ymd = (await jdnToYmd("Julian A.D.", val)).ymd;
+        ymd = (await jdnToYmd(this.calendar, val)).ymd;
       } catch (error) {
         ymd = [null, null, null];
       }

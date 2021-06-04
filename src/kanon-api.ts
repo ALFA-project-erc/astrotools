@@ -13,6 +13,25 @@ export type DateResponse = {
   ymd: [number, number, number];
 };
 
+export type BasedRealResponse = {
+  value: string;
+  remainder: string;
+};
+
+export type CalendarInfos = {
+  common_year: number;
+  leap_year: number;
+  months: {
+    days_cy: number;
+    days_ly: number;
+    name: string;
+    variant: string;
+  }[];
+  name: string;
+  cycle: [number, number];
+  era: number;
+};
+
 export type EphemeridesResponse = {
   jdn: number;
   position: string;
@@ -62,7 +81,12 @@ export const getEphemerides = async (
       ...v,
       imcce: imcceLong[idx],
       diff: imcceLong[idx]
-        ? await getCalcCompute(`${v.position}-${imcceLong[idx]}`, "Sexagesimal")
+        ? (
+            await getCalcCompute(
+              `${v.position}-${imcceLong[idx]}`,
+              "Sexagesimal"
+            )
+          ).value
         : undefined,
     }))
   );
@@ -148,16 +172,12 @@ const imcceLatToSexa = (str: string) => {
 export const getCalcCompute = async (
   query: string,
   radix: string
-): Promise<string> => {
-  const response = (
-    await kanonClient.get<{ result: string }>(
-      `calculations/${radix}/compute/`,
-      {
-        params: { query },
-      }
-    )
+): Promise<BasedRealResponse> => {
+  return (
+    await kanonClient.get<BasedRealResponse>(`calculations/${radix}/compute/`, {
+      params: { query },
+    })
   ).data;
-  return response.result;
 };
 
 type OpenAPISchema = {
@@ -177,4 +197,14 @@ export const getOpenAPISchema = async (): Promise<OpenAPISchema> => {
     kanonSchema = (await kanonClient.get<OpenAPISchema>("openapi.json")).data;
   }
   return kanonSchema;
+};
+
+export const getCalendarInfos = async (
+  calendar: string
+): Promise<CalendarInfos> => {
+  return (
+    await kanonClient.get<CalendarInfos>(
+      `calendars/${calendar.replace("/", "\\/")}/infos`
+    )
+  ).data;
 };

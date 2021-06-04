@@ -9,6 +9,7 @@
       exact
     />
     <q-route-tab label="Calculator" icon="calculate" to="/calculator" exact />
+    <q-route-tab label="Calendar" icon="calendar_today" to="/calendar" exact />
     <q-route-tab label="About" icon="help" to="/about" exact />
   </q-tabs>
 </template>

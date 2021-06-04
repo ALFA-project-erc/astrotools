@@ -39,9 +39,12 @@
       </q-item>
     </q-card-section>
     <q-card-actions align="center">
-      <JulianDatePicker
+      <DatePicker
         :loading="loading < 8"
         :percentage="(loading / 8) * 100"
+        :maxDays="31"
+        :maxMonth="12"
+        calendar="Julian A.D."
         @submit="onSubmit"
       />
     </q-card-actions>
@@ -49,7 +52,7 @@
 </template>
 
 <script lang="ts">
-import JulianDatePicker from "@/components/JulianDatePicker.vue";
+import DatePicker from "@/components/DatePicker.vue";
 import PositionDisplay from "@/components/PositionDisplay.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
@@ -58,7 +61,7 @@ import { defineComponent, ref } from "vue";
 
 export default defineComponent({
   name: "Horoscope",
-  components: { JulianDatePicker, PositionDisplay, SexaDegrees },
+  components: { DatePicker, PositionDisplay, SexaDegrees },
   data() {
     const positions = new Map<Planet, string>();
     Object.values(Planet).forEach((planet) => {

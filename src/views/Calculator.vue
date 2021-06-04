@@ -2,7 +2,7 @@
   <q-form @submit="compute()">
     <q-select
       :options="radices"
-      title="Select a numerical base"
+      label="Numerical base"
       v-model="selectedRadix"
     />
     <q-input label="Query" v-model="query" filled maxlength="40" />
@@ -13,35 +13,44 @@
 
 <script lang="ts">
 import { getCalcCompute, getOpenAPISchema } from "@/kanon-api";
-import { defineComponent, ref } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
 
 export default defineComponent({
-  data() {
-    return {
-      result: "",
-      query: ref<string>(""),
-      radices: [] as string[],
-      selectedRadix: ref<string | null>(null),
-      loading: false,
-    };
-  },
-  async created() {
-    this.radices = (
-      await getOpenAPISchema()
-    ).components.schemas.SupportedRadices.enum;
-    this.selectedRadix = this.radices[0];
-  },
-  methods: {
-    async compute() {
-      if (!this.selectedRadix || !this.query) return;
-      this.loading = true;
+  setup() {
+    const radices = ref<string[]>([]);
+    const selectedRadix = ref<string | null>(null);
+
+    onMounted(async () => {
+      radices.value = (
+        await getOpenAPISchema()
+      ).components.schemas.SupportedRadices.enum;
+      selectedRadix.value = radices.value[0];
+    });
+
+    const loading = ref(false);
+    const result = ref<string>("");
+    const query = ref<string>("");
+
+    const compute = async () => {
+      if (!selectedRadix.value || !query.value) return;
+      loading.value = true;
       try {
-        this.result = await getCalcCompute(this.query, this.selectedRadix);
+        const res = await getCalcCompute(query.value, selectedRadix.value);
+        result.value = `${res.value} | rem: ${res.remainder}`;
       } catch (error) {
-        this.result = "Error";
+        result.value = error.response?.data?.detail;
       }
-      this.loading = false;
-    },
+      loading.value = false;
+    };
+
+    return {
+      radices,
+      selectedRadix,
+      loading,
+      result,
+      compute,
+      query,
+    };
   },
 });
 </script>
