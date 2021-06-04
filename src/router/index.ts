@@ -31,6 +31,11 @@ const routes: Array<RouteRecordRaw> = [
     name: "Calculator",
     component: () => import("../views/Calculator.vue"),
   },
+  {
+    path: "/calendar",
+    name: "Calendar",
+    component: () => import("../views/Calendar.vue"),
+  },
 ];
 
 const router = createRouter({

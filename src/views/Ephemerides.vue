@@ -37,7 +37,12 @@
       >
         Select your starting date.
 
-        <JulianDatePicker @submit="date = $event" />
+        <DatePicker
+          :maxDays="31"
+          :maxMonth="12"
+          calendar="Julian A.D."
+          @submit="date = $event"
+        />
 
         <q-stepper-navigation>
           <q-btn
@@ -146,14 +151,14 @@
 
 <script lang="ts">
 import JdnJulianDate from "@/components/JdnJulianDate.vue";
-import JulianDatePicker from "@/components/JulianDatePicker.vue";
+import DatePicker from "@/components/DatePicker.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
 import { EphemeridesResponse, getEphemerides, YMD } from "@/kanon-api";
 import { capitalize, defineComponent, ref } from "vue";
 
 export default defineComponent({
-  components: { JulianDatePicker, SexaDegrees, JdnJulianDate },
+  components: { DatePicker, SexaDegrees, JdnJulianDate },
   data() {
     return {
       cBodies: Object.values(Planet),
