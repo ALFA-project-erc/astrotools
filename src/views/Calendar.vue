@@ -1,52 +1,41 @@
 <template>
-  <q-select :options="calendars" label="Calendar" v-model="selectedCalendar" />
-
-  <q-card v-if="calendarInfos">
+  <q-card>
+    <q-card-section>
+      <q-select
+        standout
+        :options="calendars"
+        label="Calendar"
+        v-model="selectedCalendar"
+      />
+    </q-card-section>
     <q-inner-loading :showing="infoLoading">
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
-    <div v-show="!infoLoading">
-      <q-card-section>
-        <div class="text-h6">
-          {{ calendarInfos.name }}
-        </div>
-      </q-card-section>
-      <q-tabs v-model="tab">
-        <q-tab label="Infos" name="one" />
-        <q-tab label="Conversion" name="two" />
-      </q-tabs>
-      <q-separator />
-      <q-tab-panels v-model="tab" animated>
-        <q-tab-panel name="one">
+    <div v-if="calendarInfos">
+      <q-card-section horizontal v-show="!infoLoading">
+        <q-card-section class="col-6">
           <q-list>
-            <q-item>
-              <q-item-label
-                >{{ calendarInfos.common_year }} /
-                {{ calendarInfos.leap_year }}</q-item-label
-              >
-              <q-item-label caption>Common year / Leap year</q-item-label>
-            </q-item>
-            <q-item>
-              <q-item-label>{{ calendarInfos.era }}</q-item-label>
-              <q-item-label caption>Era starting day</q-item-label>
-            </q-item>
-            <q-item>
-              <q-item-label
-                >{{ calendarInfos.months.length }} months</q-item-label
-              >
-              <q-btn
-                color="grey"
-                round
-                flat
-                dense
-                :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
-                @click="expanded = !expanded"
-              />
-            </q-item>
+            <q-item-label
+              >{{ calendarInfos.common_year }} /
+              {{ calendarInfos.leap_year }}</q-item-label
+            >
+            <q-item-label caption>Common year / Leap year</q-item-label>
+            <q-item-label>{{ calendarInfos.era }}</q-item-label>
+            <q-item-label caption>Era starting day</q-item-label>
+            <q-item-label
+              >{{ calendarInfos.months.length }} months</q-item-label
+            >
+            <q-btn
+              color="grey"
+              round
+              flat
+              dense
+              :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
+              @click="expanded = !expanded"
+            />
             <q-slide-transition>
               <div v-show="expanded">
-                <q-separator />
-                <q-item
+                <div
                   v-for="(month, idx) in calendarInfos.months"
                   :key="month.name"
                 >
@@ -54,15 +43,16 @@
                   <q-item-label caption
                     >{{ month.days_cy }} / {{ month.days_ly }}</q-item-label
                   >
-                </q-item>
+                </div>
               </div>
             </q-slide-transition>
           </q-list>
-        </q-tab-panel>
-        <q-tab-panel name="two">
+        </q-card-section>
+        <q-card-section class="q-gutter-md">
           <q-select
+            outlined
             :options="calendars"
-            label="Calendar"
+            label="Convert to"
             v-model="selectedConvertTo"
           />
           <DatePicker
@@ -71,10 +61,13 @@
             :calendar="calendarInfos.name"
             :loading="convertLoading"
             @submit="convert"
+            class="col"
           />
-          {{ conversionResult }}
-        </q-tab-panel>
-      </q-tab-panels>
+          <p>
+            {{ conversionResult }}
+          </p>
+        </q-card-section>
+      </q-card-section>
     </div>
   </q-card>
 </template>
@@ -151,7 +144,9 @@ export default defineComponent({
   computed: {
     maxDays(): number {
       if (!this.calendarInfos) return 0;
-      return Math.max(...this.calendarInfos.months.map((m) => m.days_ly));
+      return Math.max(
+        ...this.calendarInfos.months.map((m) => m.days_ly || m.days_cy)
+      );
     },
     maxMonth(): number {
       if (!this.calendarInfos) return 0;

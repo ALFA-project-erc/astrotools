@@ -5,7 +5,9 @@
     <q-page-container class="margin">
       <router-view v-slot="{ Component }">
         <keep-alive>
-          <component :is="Component" />
+          <div class="q-pa-md">
+            <component :is="Component" />
+          </div>
         </keep-alive>
       </router-view>
     </q-page-container>
