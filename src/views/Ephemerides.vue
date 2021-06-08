@@ -4,7 +4,7 @@
       :name="1"
       title="Celestial body"
       :caption="step1Caption"
-      icon="settings"
+      icon="flare"
       :done="planet && step > 1"
     >
       Select your celestial body.
@@ -26,7 +26,7 @@
       :name="2"
       title="Starting date"
       :caption="step2Caption"
-      icon="create_new_folder"
+      icon="today"
       :done="date !== null"
       :disable="!planet"
     >
@@ -111,8 +111,7 @@
       </div>
     </q-step>
   </q-stepper>
-
-  <q-markup-table>
+  <q-markup-table v-if="positionData.length > 0" class="q-mt-md">
     <thead>
       <tr>
         <th class="text-left">Date</th>

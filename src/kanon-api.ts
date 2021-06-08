@@ -212,3 +212,31 @@ export const getCalendarInfos = async (
     )
   ).data;
 };
+
+export const brToFloat = async (
+  radix: string,
+  value: string
+): Promise<number> => {
+  return (
+    await kanonClient.get<{ value: number }>(
+      `calculations/${radix}/to_float/`,
+      {
+        params: { value },
+      }
+    )
+  ).data.value;
+};
+export const brFromFloat = async (
+  radix: string,
+  value: number,
+  precision: number
+): Promise<string> => {
+  return (
+    await kanonClient.get<BasedRealResponse>(
+      `calculations/${radix}/from_float/`,
+      {
+        params: { value, precision },
+      }
+    )
+  ).data.value;
+};

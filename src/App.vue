@@ -4,11 +4,11 @@
 
     <q-page-container class="margin">
       <router-view v-slot="{ Component }">
-        <keep-alive>
-          <div class="q-pa-md">
+        <div class="q-pa-md">
+          <keep-alive>
             <component :is="Component" />
-          </div>
-        </keep-alive>
+          </keep-alive>
+        </div>
       </router-view>
     </q-page-container>
   </q-layout>

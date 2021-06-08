@@ -8,11 +8,12 @@
         v-model="selectedCalendar"
       />
     </q-card-section>
+    <q-separator />
     <q-inner-loading :showing="infoLoading">
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
     <div v-if="calendarInfos">
-      <q-card-section horizontal v-show="!infoLoading">
+      <q-card-section horizontal class="q-px-md q-pb-md" v-show="!infoLoading">
         <q-card-section class="col-6">
           <div class="q-gutter-md">
             <div>
