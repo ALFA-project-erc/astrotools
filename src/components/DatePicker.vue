@@ -1,5 +1,5 @@
 <template>
-  <q-form class="row" @submit="$emit('submit', { ...ymd, jdn })">
+  <q-form class="row" @submit="$emit('submit', { ...ymd, jdn, date })">
     <div class="row q-gutter-sm" v-if="selectDate">
       <q-input
         label="Year"
@@ -66,7 +66,7 @@
 </template>
 
 <script lang="ts">
-import { jdnToYmd, ymdToJdn } from "@/kanon-api";
+import { jdnToDate, ymdToDate } from "@/kanon-api";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
@@ -96,6 +96,7 @@ export default defineComponent({
         year: ref<number | null>(null),
       },
       jdn: ref<number | null>(null),
+      date: ref<string | null>(null),
     };
   },
   watch: {
@@ -110,7 +111,9 @@ export default defineComponent({
           return;
         this.jdn = null;
         try {
-          this.jdn = await ymdToJdn(this.calendar, val);
+          const { jdn, date } = await ymdToDate(this.calendar, val);
+          this.jdn = jdn;
+          this.date = date;
         } catch (error) {
           if (val == this.ymd) this.jdn = null;
         }
@@ -122,7 +125,9 @@ export default defineComponent({
       if (this.selectDate || val === null) return;
       let ymd: [number | null, number | null, number | null];
       try {
-        ymd = (await jdnToYmd(this.calendar, val)).ymd;
+        const response = await jdnToDate(this.calendar, val);
+        this.date = response.date;
+        ymd = response.ymd;
       } catch (error) {
         ymd = [null, null, null];
       }

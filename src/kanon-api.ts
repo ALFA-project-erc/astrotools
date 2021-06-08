@@ -12,6 +12,10 @@ export type DateResponse = {
   date: string;
   ymd: [number, number, number];
 };
+export type JdnResponse = {
+  date: string;
+  jdn: number;
+};
 
 export type BasedRealResponse = {
   value: string;
@@ -101,7 +105,7 @@ export const getAscendant = async (date: YMD): Promise<string> => {
   return response.value;
 };
 
-export const jdnToYmd = async (
+export const jdnToDate = async (
   calendar: string,
   jdn: number
 ): Promise<DateResponse> => {
@@ -113,16 +117,16 @@ export const jdnToYmd = async (
   return response;
 };
 
-export const ymdToJdn = async (
+export const ymdToDate = async (
   calendar: string,
   date: YMD
-): Promise<number> => {
+): Promise<JdnResponse> => {
   const response = (
-    await kanonClient.get<{ jdn: number }>(`calendars/${calendar}/to_jdn/`, {
+    await kanonClient.get<JdnResponse>(`calendars/${calendar}/to_jdn/`, {
       params: date,
     })
   ).data;
-  return response.jdn;
+  return response;
 };
 
 export const imccePosition = async (

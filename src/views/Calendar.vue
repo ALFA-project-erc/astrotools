@@ -2,7 +2,7 @@
   <q-card>
     <q-card-section>
       <q-select
-        standout
+        filled
         :options="calendars"
         label="Calendar"
         v-model="selectedCalendar"
@@ -14,39 +14,40 @@
     <div v-if="calendarInfos">
       <q-card-section horizontal v-show="!infoLoading">
         <q-card-section class="col-6">
-          <q-list>
-            <q-item-label
-              >{{ calendarInfos.common_year }} /
-              {{ calendarInfos.leap_year }}</q-item-label
-            >
-            <q-item-label caption>Common year / Leap year</q-item-label>
-            <q-item-label>{{ calendarInfos.era }}</q-item-label>
-            <q-item-label caption>Era starting day</q-item-label>
-            <q-item-label
-              >{{ calendarInfos.months.length }} months</q-item-label
-            >
-            <q-btn
-              color="grey"
-              round
-              flat
-              dense
-              :icon="expanded ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
-              @click="expanded = !expanded"
-            />
-            <q-slide-transition>
-              <div v-show="expanded">
-                <div
+          <div class="q-gutter-md">
+            <div>
+              {{ calendarInfos.common_year }} /
+              {{ calendarInfos.leap_year }}
+              <q-item-label caption>Common year / Leap year</q-item-label>
+            </div>
+            <div>
+              {{ calendarInfos.era }}
+              <q-item-label caption>Era starting day</q-item-label>
+            </div>
+            <q-markup-table separator="cell" flat bordered>
+              <thead>
+                <tr>
+                  <th class="text-left">#</th>
+                  <th class="text-left">Name</th>
+                  <th class="text-right">Days Common Year</th>
+                  <th class="text-right">Days Leap Year</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
                   v-for="(month, idx) in calendarInfos.months"
                   :key="month.name"
                 >
-                  <q-item-label> {{ idx + 1 }} {{ month.name }} </q-item-label>
-                  <q-item-label caption
-                    >{{ month.days_cy }} / {{ month.days_ly }}</q-item-label
-                  >
-                </div>
-              </div>
-            </q-slide-transition>
-          </q-list>
+                  <td class="text-left">{{ idx + 1 }}</td>
+                  <td class="text-left">{{ month.name }}</td>
+                  <td class="text-right">{{ month.days_cy }}</td>
+                  <td class="text-right">
+                    {{ month.days_ly === month.days_cy ? "-" : month.days_ly }}
+                  </td>
+                </tr>
+              </tbody>
+            </q-markup-table>
+          </div>
         </q-card-section>
         <q-card-section class="q-gutter-md">
           <q-select
@@ -63,9 +64,29 @@
             @submit="convert"
             class="col"
           />
-          <p>
-            {{ conversionResult }}
-          </p>
+          <q-markup-table
+            separator="vertical"
+            flat
+            bordered
+            v-if="conversionResult"
+          >
+            <thead>
+              <tr>
+                <th class="text-left">{{ selectedCalendar }}</th>
+                <th class="text-right">{{ selectedConvertTo }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="text-left">{{ conversionInput.date }}</td>
+                <td class="text-right">{{ conversionResult.date }}</td>
+              </tr>
+              <tr>
+                <td class="text-right">{{ conversionInput.ymd.join("/") }}</td>
+                <td class="text-left">{{ conversionResult.ymd.join("/") }}</td>
+              </tr>
+            </tbody>
+          </q-markup-table>
         </q-card-section>
       </q-card-section>
     </div>
@@ -76,9 +97,10 @@
 import DatePicker from "@/components/DatePicker.vue";
 import {
   CalendarInfos,
+  DateResponse,
   getCalendarInfos,
   getOpenAPISchema,
-  jdnToYmd,
+  jdnToDate,
 } from "@/kanon-api";
 import { defineComponent, onMounted, ref, watch } from "vue";
 
@@ -103,7 +125,8 @@ export default defineComponent({
 
     watch(selectedCalendar, async () => {
       if (!selectedCalendar.value) return;
-      conversionResult.value = "";
+      conversionResult.value = null;
+      conversionInput.value = null;
       infoLoading.value = true;
       try {
         calendarInfos.value = await getCalendarInfos(selectedCalendar.value);
@@ -113,17 +136,29 @@ export default defineComponent({
       infoLoading.value = false;
     });
 
-    const conversionResult = ref("");
+    const conversionResult = ref<DateResponse | null>(null);
+    const conversionInput = ref<DateResponse | null>(null);
 
-    const convert = async ({ jdn }: { jdn: number }) => {
+    const convert = async ({
+      jdn,
+      date,
+      day,
+      month,
+      year,
+    }: {
+      jdn: number;
+      date: string;
+      day: number;
+      month: number;
+      year: number;
+    }) => {
       if (!selectedConvertTo.value) return;
       convertLoading.value = true;
+      conversionInput.value = { date, ymd: [year, month, day] };
       try {
-        conversionResult.value = (
-          await jdnToYmd(selectedConvertTo.value, jdn)
-        ).date;
+        conversionResult.value = await jdnToDate(selectedConvertTo.value, jdn);
       } catch (error) {
-        conversionResult.value = error.response;
+        conversionResult.value = { date: error.response, ymd: [0, 0, 0] };
       }
       convertLoading.value = false;
     };
@@ -133,11 +168,11 @@ export default defineComponent({
       selectedCalendar,
       selectedConvertTo,
       infoLoading,
+      convertLoading,
       calendarInfos,
-      expanded: ref(false),
       tab: ref("one"),
       convert,
-      convertLoading,
+      conversionInput,
       conversionResult,
     };
   },
