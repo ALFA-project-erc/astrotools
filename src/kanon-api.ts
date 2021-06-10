@@ -12,6 +12,10 @@ export type DateResponse = {
   date: string;
   ymd: [number, number, number];
 };
+export type JdnResponse = {
+  date: string;
+  jdn: number;
+};
 
 export type BasedRealResponse = {
   value: string;
@@ -35,8 +39,8 @@ export type CalendarInfos = {
 export type EphemeridesResponse = {
   jdn: number;
   position: string;
-  imcce: string | undefined;
-  diff: string | undefined;
+  imcce?: string;
+  diff?: string;
 }[];
 
 export type YMD = { day: number; month: number; year: number };
@@ -57,7 +61,8 @@ export const getEphemerides = async (
   planet: Planet,
   date: YMD,
   nVal: number,
-  step: number
+  step: number,
+  imcce: boolean
 ): Promise<EphemeridesResponse> => {
   const kanonRes = (
     await kanonClient.get<TruePosResponse>(`ephemerides/${planet}/true_pos/`, {
@@ -68,28 +73,40 @@ export const getEphemerides = async (
       },
     })
   ).data;
-  let imcceLong: (string | undefined)[];
-  try {
-    imcceLong = (await imccePosition(planet, kanonRes[0].jdn, nVal, step)).map(
-      (v) => imcceLatToSexa(v.Longitude)
-    );
-  } catch (error) {
-    imcceLong = Array(kanonRes.length);
+  let imcceAndDiffs: {
+    imcce?: string;
+    diff?: string;
+  }[] = Array(kanonRes.length);
+  if (imcce) {
+    try {
+      const imcceResponse = await imccePosition(
+        planet,
+        kanonRes[0].jdn,
+        nVal,
+        step
+      );
+      imcceAndDiffs = await Promise.all(
+        imcceResponse.map(async (v, idx) => {
+          const imcce = imcceLatToSexa(v.Longitude);
+          return {
+            imcce,
+            diff: (
+              await getCalcCompute(
+                `${kanonRes[idx].position}-${imcce}`,
+                "Sexagesimal"
+              )
+            ).value,
+          };
+        })
+      );
+    } catch (error) {
+      imcceAndDiffs = Array(kanonRes.length);
+    }
   }
-  return Promise.all(
-    kanonRes.map(async (v, idx) => ({
-      ...v,
-      imcce: imcceLong[idx],
-      diff: imcceLong[idx]
-        ? (
-            await getCalcCompute(
-              `${v.position}-${imcceLong[idx]}`,
-              "Sexagesimal"
-            )
-          ).value
-        : undefined,
-    }))
-  );
+  return kanonRes.map((v, idx) => ({
+    ...v,
+    ...imcceAndDiffs[idx],
+  }));
 };
 
 export const getAscendant = async (date: YMD): Promise<string> => {
@@ -101,7 +118,7 @@ export const getAscendant = async (date: YMD): Promise<string> => {
   return response.value;
 };
 
-export const jdnToYmd = async (
+export const jdnToDate = async (
   calendar: string,
   jdn: number
 ): Promise<DateResponse> => {
@@ -113,16 +130,16 @@ export const jdnToYmd = async (
   return response;
 };
 
-export const ymdToJdn = async (
+export const ymdToDate = async (
   calendar: string,
   date: YMD
-): Promise<number> => {
+): Promise<JdnResponse> => {
   const response = (
-    await kanonClient.get<{ jdn: number }>(`calendars/${calendar}/to_jdn/`, {
+    await kanonClient.get<JdnResponse>(`calendars/${calendar}/to_jdn/`, {
       params: date,
     })
   ).data;
-  return response.jdn;
+  return response;
 };
 
 export const imccePosition = async (
@@ -142,7 +159,7 @@ export const imccePosition = async (
     "-rplane=2&-mime=json&-teph=2&-theory=DE406&";
   const options = `-name=${planet}&-type=${
     planet == Planet.Sun ? "star" : "planet"
-  }&-ep=${jdn + toledoDiff}&-nbd=${nVal}&-step=${step}d`;
+  }&-ep=${jdn + 1 + toledoDiff}&-nbd=${nVal}&-step=${step}d`;
 
   const response = await axios.get<{
     data: { Date: string; Longitude: string }[];
@@ -207,4 +224,32 @@ export const getCalendarInfos = async (
       `calendars/${calendar.replace("/", "\\/")}/infos`
     )
   ).data;
+};
+
+export const brToFloat = async (
+  radix: string,
+  value: string
+): Promise<number> => {
+  return (
+    await kanonClient.get<{ value: number }>(
+      `calculations/${radix}/to_float/`,
+      {
+        params: { value },
+      }
+    )
+  ).data.value;
+};
+export const brFromFloat = async (
+  radix: string,
+  value: number,
+  precision: number
+): Promise<string> => {
+  return (
+    await kanonClient.get<BasedRealResponse>(
+      `calculations/${radix}/from_float/`,
+      {
+        params: { value, precision },
+      }
+    )
+  ).data.value;
 };

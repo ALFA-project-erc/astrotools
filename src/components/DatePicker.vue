@@ -1,5 +1,5 @@
 <template>
-  <q-form class="row" @submit="$emit('submit', { ...ymd, jdn })">
+  <q-form class="row" @submit="$emit('submit', { ...ymd, jdn, date })">
     <div class="row q-gutter-sm" v-if="selectDate">
       <q-input
         label="Year"
@@ -66,7 +66,7 @@
 </template>
 
 <script lang="ts">
-import { jdnToYmd, ymdToJdn } from "@/kanon-api";
+import { jdnToDate, ymdToDate } from "@/kanon-api";
 import { defineComponent, ref } from "vue";
 
 export default defineComponent({
@@ -77,12 +77,15 @@ export default defineComponent({
     calendar: { type: String, required: true },
     maxDays: { type: Number, required: true },
     maxMonth: { type: Number, required: true },
+    startingJdn: Number,
   },
   emits: {
     submit: (data: {
       day: number | null;
       month: number | null;
       year: number | null;
+      date: string | null;
+      jdn: number | null;
     }) => {
       return data.day !== null && data.month !== null && data.year !== null;
     },
@@ -95,7 +98,9 @@ export default defineComponent({
         month: ref<number | null>(null),
         year: ref<number | null>(null),
       },
-      jdn: ref<number | null>(null),
+      jdn: ref<number | null>(this.startingJdn || null),
+      startingJdnFlag: this.startingJdn !== undefined,
+      date: ref<string | null>(null),
     };
   },
   watch: {
@@ -110,7 +115,9 @@ export default defineComponent({
           return;
         this.jdn = null;
         try {
-          this.jdn = await ymdToJdn(this.calendar, val);
+          const { jdn, date } = await ymdToDate(this.calendar, val);
+          this.jdn = jdn;
+          this.date = date;
         } catch (error) {
           if (val == this.ymd) this.jdn = null;
         }
@@ -118,19 +125,28 @@ export default defineComponent({
       immediate: true,
       deep: true,
     },
-    async jdn(val) {
-      if (this.selectDate || val === null) return;
-      let ymd: [number | null, number | null, number | null];
-      try {
-        ymd = (await jdnToYmd(this.calendar, val)).ymd;
-      } catch (error) {
-        ymd = [null, null, null];
-      }
-      if (val == this.jdn) {
-        this.ymd.day = ymd[2];
-        this.ymd.month = ymd[1];
-        this.ymd.year = ymd[0];
-      }
+    jdn: {
+      async handler(val) {
+        if ((this.selectDate || val === null) && !this.startingJdnFlag) return;
+        let ymd: [number | null, number | null, number | null];
+        try {
+          const response = await jdnToDate(this.calendar, val);
+          this.date = response.date;
+          ymd = response.ymd;
+        } catch (error) {
+          ymd = [null, null, null];
+        }
+        if (val == this.jdn) {
+          this.ymd.day = ymd[2];
+          this.ymd.month = ymd[1];
+          this.ymd.year = ymd[0];
+        }
+        if (this.startingJdnFlag) {
+          this.$emit("submit", { ...this.ymd, date: this.date, jdn: this.jdn });
+          this.startingJdnFlag = false;
+        }
+      },
+      immediate: true,
     },
   },
 });

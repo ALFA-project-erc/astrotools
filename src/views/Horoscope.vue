@@ -1,8 +1,9 @@
 <template>
   <q-card class="my-card">
     <q-card-section>
-      <div class="text-h6">Horoscope</div>
+      <div class="text-h6">Horoscope {{ date }}</div>
     </q-card-section>
+    <q-separator />
     <q-card-section class="row">
       <q-card-section class="col">
         <PositionDisplay
@@ -18,9 +19,9 @@
       </q-card-section>
     </q-card-section>
     <q-card-section>
-      <q-item clickable>
+      <q-item clickable class="q-mx-md">
         <q-item-section avatar>
-          <q-icon color="primary" name="brightness_3" />
+          <q-icon color="primary" name="img:svg/ascendant.svg" />
         </q-item-section>
 
         <q-item-section>
@@ -44,6 +45,7 @@
         :percentage="(loading / 8) * 100"
         :maxDays="31"
         :maxMonth="12"
+        :startingJdn="jdnToday"
         calendar="Julian A.D."
         @submit="onSubmit"
       />
@@ -69,11 +71,18 @@ export default defineComponent({
     });
     const ascendant = ref("");
     const loading = 8;
-    return { positions, ascendant, loading };
+    const jdnToday = Math.floor(new Date().getTime() / 86400000 + 2440587.5);
+    return { positions, ascendant, loading, date: "", jdnToday };
   },
   methods: {
-    async onSubmit(event: { day: number; month: number; year: number }) {
+    async onSubmit(event: {
+      day: number;
+      month: number;
+      year: number;
+      date: string;
+    }) {
       this.loading = 0;
+      this.date = event.date;
       const ascendantPromise = getAscendant(event);
       const allPromises = Promise.all(
         Object.values(Planet).map(async (planet) => {

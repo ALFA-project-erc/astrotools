@@ -5,7 +5,7 @@
 </template>
 
 <script lang="ts">
-import { jdnToYmd } from "@/kanon-api";
+import { jdnToDate } from "@/kanon-api";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -14,6 +14,7 @@ export default defineComponent({
       type: Number,
       required: true,
     },
+    showProp: Number,
   },
   data() {
     return {
@@ -23,10 +24,16 @@ export default defineComponent({
     };
   },
   watch: {
+    showProp: {
+      immediate: true,
+      handler(val) {
+        this.show = val;
+      },
+    },
     jdn: {
       async handler(val) {
         try {
-          const res = await jdnToYmd("Julian A.D.", val);
+          const res = await jdnToDate("Julian A.D.", val);
           this.date = res.date;
           this.ymd =
             res.ymd[0].toString() +
