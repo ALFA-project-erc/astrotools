@@ -1,12 +1,12 @@
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import JdnJulianDate from "@/components/JdnJulianDate.vue";
-import { DateResponse, jdnToYmd } from "@/kanon-api";
+import { DateResponse, jdnToDate } from "@/kanon-api";
 import { mocked } from "ts-jest/utils";
 import { updateAndNextFactory } from "./utils";
 
 jest.mock("@/kanon-api");
 
-const mockedCall = mocked(jdnToYmd);
+const mockedCall = mocked(jdnToDate);
 
 const data0: DateResponse = {
   date: "date",
@@ -18,6 +18,7 @@ const data1: DateResponse = {
 };
 
 describe("JdnJulianDate.vue", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let wrapper: VueWrapper<any>;
   let updateAndNext: () => Promise<void>;
 
@@ -29,6 +30,7 @@ describe("JdnJulianDate.vue", () => {
     wrapper = shallowMount(JdnJulianDate, {
       props: {
         jdn: 1,
+        showProp: 1,
       },
     });
     updateAndNext = updateAndNextFactory(wrapper.vm);
@@ -38,13 +40,13 @@ describe("JdnJulianDate.vue", () => {
   it("fetches date data from jdn on change", async () => {
     expect(mockedCall).toBeCalledTimes(1);
 
-    expect(wrapper.vm.$data.date).toMatch(data0.date);
-    expect(wrapper.vm.$data.ymd).toMatch("1/02/03");
+    expect(wrapper.vm.$data.date).toEqual(data0.date);
+    expect(wrapper.vm.$data.ymd).toEqual("1/02/03");
 
     await wrapper.setProps({ jdn: 2 });
     await updateAndNext();
-    expect(wrapper.vm.$data.date).toMatch(data1.date);
-    expect(wrapper.vm.$data.ymd).toMatch("2/01/04");
+    expect(wrapper.vm.$data.date).toEqual(data1.date);
+    expect(wrapper.vm.$data.ymd).toEqual("2/01/04");
 
     await wrapper.setProps({ jdn: 2 });
     await updateAndNext();
@@ -52,20 +54,20 @@ describe("JdnJulianDate.vue", () => {
 
     await wrapper.setProps({ jdn: 3 });
     await updateAndNext();
-    expect(wrapper.vm.$data.ymd).toMatch("");
-    expect(wrapper.vm.$data.date).toMatch("");
+    expect(wrapper.vm.$data.ymd).toEqual("");
+    expect(wrapper.vm.$data.date).toEqual("");
   });
 
   it("goes through each state on clicks", async () => {
-    expect(wrapper.text()).toMatch("1/02/03");
+    expect(wrapper.text()).toEqual("1/02/03");
 
     await wrapper.find("div").trigger("click");
-    expect(wrapper.text()).toMatch(wrapper.props("jdn").toString());
+    expect(wrapper.text()).toEqual(wrapper.props("jdn").toString());
 
     await wrapper.find("div").trigger("click");
-    expect(wrapper.text()).toMatch(wrapper.vm.$data.date);
+    expect(wrapper.text()).toEqual(wrapper.vm.$data.date);
 
     await wrapper.find("div").trigger("click");
-    expect(wrapper.text()).toMatch("1/02/03");
+    expect(wrapper.text()).toEqual("1/02/03");
   });
 });

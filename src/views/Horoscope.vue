@@ -19,7 +19,7 @@
       </q-card-section>
     </q-card-section>
     <q-card-section>
-      <q-item clickable>
+      <q-item clickable class="q-mx-md">
         <q-item-section avatar>
           <q-icon color="primary" name="img:svg/ascendant.svg" />
         </q-item-section>

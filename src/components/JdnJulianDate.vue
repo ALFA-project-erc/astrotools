@@ -14,6 +14,7 @@ export default defineComponent({
       type: Number,
       required: true,
     },
+    showProp: Number,
   },
   data() {
     return {
@@ -23,6 +24,12 @@ export default defineComponent({
     };
   },
   watch: {
+    showProp: {
+      immediate: true,
+      handler(val) {
+        this.show = val;
+      },
+    },
     jdn: {
       async handler(val) {
         try {

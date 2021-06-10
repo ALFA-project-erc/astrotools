@@ -39,8 +39,8 @@ export type CalendarInfos = {
 export type EphemeridesResponse = {
   jdn: number;
   position: string;
-  imcce: string | undefined;
-  diff: string | undefined;
+  imcce?: string;
+  diff?: string;
 }[];
 
 export type YMD = { day: number; month: number; year: number };
@@ -61,7 +61,8 @@ export const getEphemerides = async (
   planet: Planet,
   date: YMD,
   nVal: number,
-  step: number
+  step: number,
+  imcce: boolean
 ): Promise<EphemeridesResponse> => {
   const kanonRes = (
     await kanonClient.get<TruePosResponse>(`ephemerides/${planet}/true_pos/`, {
@@ -72,28 +73,40 @@ export const getEphemerides = async (
       },
     })
   ).data;
-  let imcceLong: (string | undefined)[];
-  try {
-    imcceLong = (await imccePosition(planet, kanonRes[0].jdn, nVal, step)).map(
-      (v) => imcceLatToSexa(v.Longitude)
-    );
-  } catch (error) {
-    imcceLong = Array(kanonRes.length);
+  let imcceAndDiffs: {
+    imcce?: string;
+    diff?: string;
+  }[] = Array(kanonRes.length);
+  if (imcce) {
+    try {
+      const imcceResponse = await imccePosition(
+        planet,
+        kanonRes[0].jdn,
+        nVal,
+        step
+      );
+      imcceAndDiffs = await Promise.all(
+        imcceResponse.map(async (v, idx) => {
+          const imcce = imcceLatToSexa(v.Longitude);
+          return {
+            imcce,
+            diff: (
+              await getCalcCompute(
+                `${kanonRes[idx].position}-${imcce}`,
+                "Sexagesimal"
+              )
+            ).value,
+          };
+        })
+      );
+    } catch (error) {
+      imcceAndDiffs = Array(kanonRes.length);
+    }
   }
-  return Promise.all(
-    kanonRes.map(async (v, idx) => ({
-      ...v,
-      imcce: imcceLong[idx],
-      diff: imcceLong[idx]
-        ? (
-            await getCalcCompute(
-              `${v.position}-${imcceLong[idx]}`,
-              "Sexagesimal"
-            )
-          ).value
-        : undefined,
-    }))
-  );
+  return kanonRes.map((v, idx) => ({
+    ...v,
+    ...imcceAndDiffs[idx],
+  }));
 };
 
 export const getAscendant = async (date: YMD): Promise<string> => {
@@ -146,7 +159,7 @@ export const imccePosition = async (
     "-rplane=2&-mime=json&-teph=2&-theory=DE406&";
   const options = `-name=${planet}&-type=${
     planet == Planet.Sun ? "star" : "planet"
-  }&-ep=${jdn + toledoDiff}&-nbd=${nVal}&-step=${step}d`;
+  }&-ep=${jdn + 1 + toledoDiff}&-nbd=${nVal}&-step=${step}d`;
 
   const response = await axios.get<{
     data: { Date: string; Longitude: string }[];
