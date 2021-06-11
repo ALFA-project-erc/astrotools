@@ -11,7 +11,6 @@ describe("SexaDegrees.vue", () => {
     wrapper = shallowMount(SexaDegrees, {
       props: {
         value: Promise.resolve("3,01;3,14"),
-        showSexaProp: true,
       },
     });
     updateAndNext = updateAndNextFactory(wrapper.vm);
