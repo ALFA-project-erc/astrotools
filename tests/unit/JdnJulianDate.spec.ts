@@ -30,7 +30,6 @@ describe("JdnJulianDate.vue", () => {
     wrapper = shallowMount(JdnJulianDate, {
       props: {
         jdn: 1,
-        showProp: 1,
       },
     });
     updateAndNext = updateAndNextFactory(wrapper.vm);

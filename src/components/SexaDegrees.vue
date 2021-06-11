@@ -22,7 +22,7 @@ export default defineComponent({
         return true;
       },
     },
-    showSexaProp: Boolean,
+    showSexaProp: { type: Boolean, default: true },
   },
   data() {
     return {

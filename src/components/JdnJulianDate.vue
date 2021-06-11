@@ -14,7 +14,7 @@ export default defineComponent({
       type: Number,
       required: true,
     },
-    showProp: Number,
+    showProp: { type: Number, default: 1 },
   },
   data() {
     return {
