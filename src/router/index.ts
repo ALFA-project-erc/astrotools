@@ -1,5 +1,10 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import Home from "../views/Home.vue";
+import Calendar from "../views/Calendar.vue";
+import Calculator from "../views/Calculator.vue";
+import Ephemerides from "../views/Ephemerides.vue";
+import Horoscope from "../views/Horoscope.vue";
+import About from "../views/About.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -10,31 +15,27 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/about",
     name: "About",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/About.vue"),
+    component: About,
   },
   {
     path: "/horoscope",
     name: "Horoscope",
-    component: () => import("../views/Horoscope.vue"),
+    component: Horoscope,
   },
   {
     path: "/ephemerides",
     name: "Ephemerides",
-    component: () => import("../views/Ephemerides.vue"),
+    component: Ephemerides,
   },
   {
     path: "/calculator",
     name: "Calculator",
-    component: () => import("../views/Calculator.vue"),
+    component: Calculator,
   },
   {
     path: "/calendar",
     name: "Calendar",
-    component: () => import("../views/Calendar.vue"),
+    component: Calendar,
   },
 ];
 

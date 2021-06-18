@@ -1,6 +1,14 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-drawer show-if-above side="left" bordered> <VerticalTab /> </q-drawer>
+    <q-drawer
+      :breakpoint="10"
+      :mini="mini"
+      v-model="showDrawer"
+      side="left"
+      bordered
+    >
+      <VerticalTab :mini="mini" />
+    </q-drawer>
 
     <q-page-container class="margin">
       <router-view v-slot="{ Component }">
@@ -15,15 +23,38 @@
 </template>
 
 <script lang="ts">
+import { defineComponent, onMounted, onUnmounted, ref } from "vue";
+import { watch } from "@vue/runtime-core";
 import VerticalTab from "./components/VerticalTab.vue";
+import { RouteLocation, useRoute } from "vue-router";
 
-export default {
+export default defineComponent({
   name: "LayoutDefault",
+
+  setup() {
+    const route = useRoute();
+    const showDrawer = ref(false);
+
+    const mini = ref(false);
+
+    const onWidthChange = () => (mini.value = window.innerWidth < 800);
+    onMounted(() => window.addEventListener("resize", onWidthChange));
+    onUnmounted(() => window.removeEventListener("resize", onWidthChange));
+
+    watch(
+      route,
+      (route: RouteLocation) => (showDrawer.value = route.name !== "Home")
+    );
+    return {
+      showDrawer,
+      mini,
+    };
+  },
 
   components: {
     VerticalTab,
   },
-};
+});
 </script>
 
 <style>
