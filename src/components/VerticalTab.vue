@@ -1,16 +1,52 @@
 <template>
   <q-tabs vertical active-color="primary" class="text-secondary">
-    <q-route-tab label="Home" icon="home" to="/" exact />
-    <q-route-tab label="Horoscope" icon="brightness_4" to="/horoscope" exact />
-    <q-route-tab label="Ephemerides" icon="wb_sunny" to="/ephemerides" exact />
-    <q-route-tab label="Calculator" icon="calculate" to="/calculator" exact />
-    <q-route-tab label="Calendar" icon="calendar_today" to="/calendar" exact />
-    <q-route-tab label="About" icon="help" to="/about" exact />
+    <q-tab
+      :label="mini ? '' : 'Home'"
+      icon="home"
+      @click="routeTo('Home')"
+      exact
+    />
+    <q-route-tab
+      :label="mini ? '' : 'Horoscope'"
+      icon="brightness_4"
+      to="/horoscope"
+      exact
+    />
+    <q-route-tab
+      :label="mini ? '' : 'Ephemerides'"
+      icon="wb_sunny"
+      to="/ephemerides"
+      exact
+    />
+    <q-route-tab
+      :label="mini ? '' : 'Calculator'"
+      icon="calculate"
+      to="/calculator"
+      exact
+    />
+    <q-route-tab
+      :label="mini ? '' : 'Calendar'"
+      icon="calendar_today"
+      to="/calendar"
+      exact
+    />
+    <q-route-tab :label="mini ? '' : 'About'" icon="help" to="/about" exact />
   </q-tabs>
 </template>
 
 <script lang="ts">
-export default {
+import { defineComponent } from "vue";
+import { useRouter } from "vue-router";
+export default defineComponent({
   name: "VerticalTab",
-};
+  props: {
+    mini: Boolean,
+  },
+  setup() {
+    const router = useRouter();
+    return {
+      routeTo: (name: string) => router.push({ name }),
+    };
+  },
+});
 </script>
