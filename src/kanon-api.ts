@@ -159,7 +159,7 @@ export const imccePosition = async (
     "-rplane=2&-mime=json&-teph=2&-theory=DE406&";
   const options = `-name=${planet}&-type=${
     planet == Planet.Sun ? "star" : "planet"
-  }&-ep=${jdn + 1 + toledoDiff}&-nbd=${nVal}&-step=${step}d`;
+  }&-ep=${jdn + toledoDiff - 1}&-nbd=${nVal}&-step=${step}d`;
 
   const response = await axios.get<{
     data: { Date: string; Longitude: string }[];
