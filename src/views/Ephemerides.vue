@@ -136,7 +136,7 @@ import DatePicker from "@/components/DatePicker.vue";
 import PlanetPositionTable from "@/components/PlanetPositionTable.vue";
 import { Planet } from "@/enums";
 import { EphemeridesResponse, getEphemerides, YMD } from "@/kanon-api";
-import { capitalize, defineComponent, ref } from "vue";
+import { capitalize, defineComponent } from "vue";
 
 export type EphemeridesInfo = {
   positions: EphemeridesResponse;
@@ -148,12 +148,12 @@ export default defineComponent({
   data() {
     return {
       cBodies: Object.values(Planet),
-      planet: ref<Planet[]>([]),
-      date: ref<YMD | null>(null),
-      nValRef: ref(1),
-      valStepRef: ref(1),
-      step: ref(1),
-      positionData: ref<EphemeridesInfo[]>([]),
+      planet: [] as Planet[],
+      date: null as YMD | null,
+      nValRef: 1,
+      valStepRef: 1,
+      step: 1,
+      positionData: [] as EphemeridesInfo[],
       loading: false,
       imcceToggle: false,
     };
@@ -191,7 +191,7 @@ export default defineComponent({
             (v, idx) =>
               `${v.jdn},"${this.positionData
                 .map((p) => p.positions[idx].position)
-                .join(",")}"`
+                .join('","')}"`
           )
           .join("\n");
       const blob = new Blob([csv], {
@@ -199,7 +199,11 @@ export default defineComponent({
       });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = "export";
+      link.download = `ephemerides_${this.date?.year}${this.date?.month}${
+        this.date?.day
+      }_${this.nVal}_${this.valStep}_${this.positionData
+        .map((p) => p.planet)
+        .join("_")}.csv`;
       link.click();
       URL.revokeObjectURL(link.href);
     },
