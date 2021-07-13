@@ -72,7 +72,7 @@ export default defineComponent({
     const ascendant = ref("");
     const loading = 8;
     const jdnToday = Math.floor(new Date().getTime() / 86400000 + 2440587.5);
-    return { positions, ascendant, loading, date: "", jdnToday };
+    return { positions, ascendant, loading, date: "", jdnToday, latitude: 40 };
   },
   methods: {
     async onSubmit(event: {
@@ -81,9 +81,13 @@ export default defineComponent({
       year: number;
       date: string;
     }) {
+      const { day, month, year, date } = event;
       this.loading = 0;
-      this.date = event.date;
-      const ascendantPromise = getAscendant(event);
+      this.date = date;
+      const ascendantPromise = getAscendant(
+        { day, month, year },
+        this.latitude
+      );
       const allPromises = Promise.all(
         Object.values(Planet).map(async (planet) => {
           try {

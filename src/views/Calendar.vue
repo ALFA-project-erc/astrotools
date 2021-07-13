@@ -155,11 +155,15 @@ export default defineComponent({
     }) => {
       if (!selectedConvertTo.value) return;
       convertLoading.value = true;
-      conversionInput.value = { date, ymd: [year, month, day] };
+      conversionInput.value = { date, ymd: [year, month, day], frac: 0.5 };
       try {
         conversionResult.value = await jdnToDate(selectedConvertTo.value, jdn);
       } catch (error) {
-        conversionResult.value = { date: error.response, ymd: [0, 0, 0] };
+        conversionResult.value = {
+          date: error.response,
+          ymd: [0, 0, 0],
+          frac: 0.5,
+        };
       }
       convertLoading.value = false;
     };

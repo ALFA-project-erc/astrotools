@@ -1,37 +1,38 @@
 <template>
-  <q-form class="row" @submit="$emit('submit', { ...ymd, jdn, date })">
+  <q-form class="row" @submit="$emit('submit', { ...dateParams, jdn, date })">
     <div class="row q-gutter-sm" v-if="selectDate">
       <q-input
         label="Year"
-        v-model.number="ymd.year"
+        v-model.number="dateParams.year"
         debounce="500"
         type="number"
         filled
         lazy-rules
-        :rules="[(val) => val !== null || 'Invalid']"
+        :rules="[(val) => val != undefined || 'Invalid']"
       />
       <q-input
         label="Month"
-        v-model.number="ymd.month"
+        v-model.number="dateParams.month"
         type="number"
         debounce="500"
         filled
         min="1"
         :max="maxMonth"
         :rules="[
-          (val) => (val !== null && val > 0 && val <= maxMonth) || 'Invalid',
+          (val) =>
+            (val != undefined && val > 0 && val <= maxMonth) || 'Invalid',
         ]"
       />
       <q-input
         label="Day"
-        v-model.number="ymd.day"
+        v-model.number="dateParams.day"
         type="number"
         debounce="500"
         filled
         min="1"
         :max="maxDays"
         :rules="[
-          (val) => (val !== null && val > 0 && val <= maxDays) || 'Invalid',
+          (val) => (val != undefined && val > 0 && val <= maxDays) || 'Invalid',
         ]"
       />
     </div>
@@ -43,7 +44,7 @@
         type="number"
         filled
         lazy-rules
-        :rules="[(val) => val !== null || 'Invalid']"
+        :rules="[(val) => val != undefined || 'Invalid']"
       />
     </div>
     <q-separator vertical dark size="5px" />
@@ -59,15 +60,28 @@
         label="Submit"
         type="submit"
         color="primary"
-        :disable="jdn === null"
+        :disable="jdn == undefined"
       />
     </div>
   </q-form>
 </template>
 
 <script lang="ts">
-import { jdnToDate, ymdToDate } from "@/kanon-api";
-import { defineComponent, ref } from "vue";
+import {
+  DateParams,
+  DateResponse,
+  JdnResponse,
+  jdnToDate,
+  ymdToDate,
+} from "@/kanon-api";
+import { fracToHM } from "@/utils";
+import { defineComponent, ref, watch } from "vue";
+
+const emptyDateParams = {
+  day: undefined,
+  month: undefined,
+  year: undefined,
+};
 
 export default defineComponent({
   name: "DatePicker",
@@ -81,73 +95,104 @@ export default defineComponent({
   },
   emits: {
     submit: (data: {
-      day: number | null;
-      month: number | null;
-      year: number | null;
-      date: string | null;
-      jdn: number | null;
-    }) => {
-      return data.day !== null && data.month !== null && data.year !== null;
-    },
+      day?: number;
+      month?: number;
+      year?: number;
+      hours?: number;
+      minutes?: number;
+      date: string | undefined;
+      jdn: number | undefined;
+    }) =>
+      data.day != undefined &&
+      data.month != undefined &&
+      data.year != undefined,
   },
-  data() {
-    return {
-      selectDate: true,
-      ymd: {
-        day: ref<number | null>(null),
-        month: ref<number | null>(null),
-        year: ref<number | null>(null),
-      },
-      jdn: ref<number | null>(this.startingJdn || null),
-      startingJdnFlag: this.startingJdn !== undefined,
-      date: ref<string | null>(null),
-    };
-  },
-  watch: {
-    ymd: {
-      async handler(val) {
+  setup(props, { emit }) {
+    const selectDate = ref(true);
+    const dateParams = ref<{
+      day: number | undefined;
+      month: number | undefined;
+      year: number | undefined;
+      hours?: number;
+      minutes?: number;
+    }>(emptyDateParams);
+    const jdn = ref<number | undefined>(props.startingJdn ?? undefined);
+    const date = ref<string | undefined>(undefined);
+
+    watch(
+      dateParams,
+      async (val) => {
         if (
-          !this.selectDate ||
-          val.day === null ||
-          val.month === null ||
-          val.year === null
+          !selectDate.value ||
+          val.day == undefined ||
+          val.month == undefined ||
+          val.year == undefined
         )
           return;
-        this.jdn = null;
+        jdn.value = undefined;
+        let response: JdnResponse | undefined;
         try {
-          const { jdn, date } = await ymdToDate(this.calendar, val);
-          this.jdn = jdn;
-          this.date = date;
+          response = await ymdToDate(props.calendar, val as DateParams);
         } catch (error) {
-          if (val == this.ymd) this.jdn = null;
+          response = undefined;
+        }
+        if (val == dateParams.value) {
+          jdn.value = response?.jdn;
+          date.value = response?.date;
         }
       },
-      immediate: true,
-      deep: true,
-    },
-    jdn: {
-      async handler(val) {
-        if ((this.selectDate || val === null) && !this.startingJdnFlag) return;
-        let ymd: [number | null, number | null, number | null];
+      { immediate: true, deep: true }
+    );
+
+    const watchJdn = async (val: number) => {
+      let response: DateResponse | undefined;
+      response = await jdnToDate(props.calendar, val);
+      if (val == jdn.value) {
+        date.value = response.date;
+        const { hours, minutes } = fracToHM(response.frac);
+        dateParams.value = {
+          day: response.ymd[2],
+          month: response.ymd[1],
+          year: response.ymd[0],
+          hours,
+          minutes,
+        };
+      }
+    };
+
+    watch(
+      jdn,
+      async (val) => {
+        if (selectDate.value || val == undefined) return;
         try {
-          const response = await jdnToDate(this.calendar, val);
-          this.date = response.date;
-          ymd = response.ymd;
-        } catch (error) {
-          ymd = [null, null, null];
-        }
-        if (val == this.jdn) {
-          this.ymd.day = ymd[2];
-          this.ymd.month = ymd[1];
-          this.ymd.year = ymd[0];
-        }
-        if (this.startingJdnFlag) {
-          this.$emit("submit", { ...this.ymd, date: this.date, jdn: this.jdn });
-          this.startingJdnFlag = false;
+          await watchJdn(val);
+        } catch {
+          if (val == jdn.value) dateParams.value = emptyDateParams;
         }
       },
-      immediate: true,
-    },
+      { immediate: true }
+    );
+
+    if (props.startingJdn != undefined) {
+      selectDate.value = false;
+      watchJdn(props.startingJdn)
+        .then(() =>
+          emit("submit", {
+            ...dateParams.value,
+            date: date.value,
+            jdn: jdn.value,
+          })
+        )
+        .catch()
+        .finally(() => (selectDate.value = true));
+    }
+
+    return {
+      selectDate,
+      dateParams,
+      jdn,
+      date,
+    };
   },
 });
 </script>
