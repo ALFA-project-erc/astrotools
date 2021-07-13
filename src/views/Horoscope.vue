@@ -37,6 +37,15 @@
           </q-item-label>
           <q-skeleton type="text" v-else square height="18px" />
         </q-item-section>
+        <q-item-section side class="col-3">
+          <q-input
+            label="Latitude"
+            v-model.number="latitude"
+            filled
+            type="number"
+            suffix="°"
+          />
+        </q-item-section>
       </q-item>
     </q-card-section>
     <q-card-actions align="center">
