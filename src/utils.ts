@@ -5,5 +5,5 @@ export const hmToFrac = (hours: number, minutes: number): number =>
   (hours + minutes / 60) / 24;
 export const fracToHM = (frac: number): { hours: number; minutes: number } => ({
   hours: Math.floor(frac * 24),
-  minutes: Math.floor((Math.floor(frac * 24) % 1) * 60),
+  minutes: Math.floor(((frac * 24) % 1) * 60),
 });
