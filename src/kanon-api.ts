@@ -11,7 +11,9 @@ export type TruePosResponse = { jdn: number; position: string }[];
 export type DateResponse = {
   date: string;
   ymd: [number, number, number];
+  frac: number;
 };
+
 export type JdnResponse = {
   date: string;
   jdn: number;
@@ -43,11 +45,17 @@ export type EphemeridesResponse = {
   diff?: string;
 }[];
 
-export type YMD = { day: number; month: number; year: number };
+export type DateParams = {
+  day: number;
+  month: number;
+  year: number;
+  hours?: number;
+  minutes?: number;
+};
 
 export const getTruePosition = async (
   planet: Planet,
-  date: YMD
+  date: DateParams
 ): Promise<string> => {
   const response = (
     await kanonClient.get<TruePosResponse>(`ephemerides/${planet}/true_pos/`, {
@@ -59,7 +67,7 @@ export const getTruePosition = async (
 
 export const getEphemerides = async (
   planet: Planet,
-  date: YMD,
+  date: DateParams,
   nVal: number,
   step: number,
   imcce: boolean
@@ -109,10 +117,13 @@ export const getEphemerides = async (
   }));
 };
 
-export const getAscendant = async (date: YMD): Promise<string> => {
+export const getAscendant = async (
+  date: DateParams,
+  latitude: number
+): Promise<string> => {
   const response = (
     await kanonClient.get<{ value: string }>(`ephemerides/ascendant/`, {
-      params: date,
+      params: { ...date, latitude },
     })
   ).data;
   return response.value;
@@ -132,7 +143,7 @@ export const jdnToDate = async (
 
 export const ymdToDate = async (
   calendar: string,
-  date: YMD
+  date: DateParams
 ): Promise<JdnResponse> => {
   const response = (
     await kanonClient.get<JdnResponse>(`calendars/${calendar}/to_jdn/`, {

@@ -11,10 +11,12 @@ const mockedCall = mocked(jdnToDate);
 const data0: DateResponse = {
   date: "date",
   ymd: [1, 2, 3],
+  frac: 0.5,
 };
 const data1: DateResponse = {
   date: "date1",
   ymd: [2, 1, 4],
+  frac: 0.5,
 };
 
 describe("JdnJulianDate.vue", () => {

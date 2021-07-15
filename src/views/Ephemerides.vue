@@ -135,7 +135,7 @@
 import DatePicker from "@/components/DatePicker.vue";
 import PlanetPositionTable from "@/components/PlanetPositionTable.vue";
 import { Planet } from "@/enums";
-import { EphemeridesResponse, getEphemerides, YMD } from "@/kanon-api";
+import { EphemeridesResponse, getEphemerides, DateParams } from "@/kanon-api";
 import { capitalize, defineComponent } from "vue";
 
 export type EphemeridesInfo = {
@@ -149,7 +149,7 @@ export default defineComponent({
     return {
       cBodies: Object.values(Planet),
       planet: [] as Planet[],
-      date: null as YMD | null,
+      date: null as DateParams | null,
       nValRef: 1,
       valStepRef: 1,
       step: 1,

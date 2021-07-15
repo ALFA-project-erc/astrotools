@@ -1,39 +1,58 @@
 <template>
-  <q-form class="row" @submit="$emit('submit', { ...ymd, jdn, date })">
-    <div class="row q-gutter-sm" v-if="selectDate">
-      <q-input
-        label="Year"
-        v-model.number="ymd.year"
-        debounce="500"
-        type="number"
-        filled
-        lazy-rules
-        :rules="[(val) => val !== null || 'Invalid']"
-      />
-      <q-input
-        label="Month"
-        v-model.number="ymd.month"
-        type="number"
-        debounce="500"
-        filled
-        min="1"
-        :max="maxMonth"
-        :rules="[
-          (val) => (val !== null && val > 0 && val <= maxMonth) || 'Invalid',
-        ]"
-      />
-      <q-input
-        label="Day"
-        v-model.number="ymd.day"
-        type="number"
-        debounce="500"
-        filled
-        min="1"
-        :max="maxDays"
-        :rules="[
-          (val) => (val !== null && val > 0 && val <= maxDays) || 'Invalid',
-        ]"
-      />
+  <q-form class="row" @submit="$emit('submit', { ...dateParams, jdn, date })">
+    <div class="column" v-if="selectDate">
+      <div class="row q-gutter-sm">
+        <q-input
+          label="Year"
+          v-model.number="YMD.year"
+          debounce="500"
+          type="number"
+          filled
+          lazy-rules
+          :rules="[(val) => val != undefined || 'Invalid']"
+        />
+        <q-input
+          label="Month"
+          v-model.number="YMD.month"
+          type="number"
+          debounce="500"
+          filled
+          min="1"
+          :max="maxMonth"
+          :rules="[
+            (val) =>
+              (val != undefined && val > 0 && val <= maxMonth) || 'Invalid',
+          ]"
+        />
+        <q-input
+          label="Day"
+          v-model.number="YMD.day"
+          type="number"
+          debounce="500"
+          filled
+          min="1"
+          :max="maxDays"
+          :rules="[
+            (val) =>
+              (val != undefined && val > 0 && val <= maxDays) || 'Invalid',
+          ]"
+        />
+      </div>
+      <div class="row justify-end" v-if="withTime">
+        <q-input filled v-model="time" mask="time" :rules="['time']">
+          <template v-slot:append>
+            <q-icon name="access_time" class="cursor-pointer">
+              <q-popup-proxy transition-show="scale" transition-hide="scale">
+                <q-time v-model="time" format24h>
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="primary" flat />
+                  </div>
+                </q-time>
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </div>
     </div>
     <div v-else>
       <q-input
@@ -41,9 +60,10 @@
         label="JDN"
         v-model.number="jdn"
         type="number"
+        step="any"
         filled
         lazy-rules
-        :rules="[(val) => val !== null || 'Invalid']"
+        :rules="[(val) => val != undefined || 'Invalid']"
       />
     </div>
     <q-separator vertical dark size="5px" />
@@ -59,15 +79,28 @@
         label="Submit"
         type="submit"
         color="primary"
-        :disable="jdn === null"
+        :disable="jdn == undefined || dateParams == undefined"
       />
     </div>
   </q-form>
 </template>
 
 <script lang="ts">
-import { jdnToDate, ymdToDate } from "@/kanon-api";
-import { defineComponent, ref } from "vue";
+import {
+  DateParams,
+  DateResponse,
+  JdnResponse,
+  jdnToDate,
+  ymdToDate,
+} from "@/kanon-api";
+import { fracToHM } from "@/utils";
+import { computed, defineComponent, ref, watch } from "vue";
+
+const emptyYMD = {
+  day: undefined,
+  month: undefined,
+  year: undefined,
+};
 
 export default defineComponent({
   name: "DatePicker",
@@ -78,76 +111,119 @@ export default defineComponent({
     maxDays: { type: Number, required: true },
     maxMonth: { type: Number, required: true },
     startingJdn: Number,
+    withTime: { type: Boolean, default: false },
   },
   emits: {
     submit: (data: {
-      day: number | null;
-      month: number | null;
-      year: number | null;
-      date: string | null;
-      jdn: number | null;
-    }) => {
-      return data.day !== null && data.month !== null && data.year !== null;
-    },
+      day?: number;
+      month?: number;
+      year?: number;
+      hours?: number;
+      minutes?: number;
+      date: string | undefined;
+      jdn: number | undefined;
+    }) =>
+      data.day != undefined &&
+      data.month != undefined &&
+      data.year != undefined,
   },
-  data() {
-    return {
-      selectDate: true,
-      ymd: {
-        day: ref<number | null>(null),
-        month: ref<number | null>(null),
-        year: ref<number | null>(null),
+  setup(props, { emit }) {
+    const selectDate = ref(true);
+    const YMD = ref<{
+      day: number | undefined;
+      month: number | undefined;
+      year: number | undefined;
+    }>(emptyYMD);
+    const jdn = ref<number | undefined>(props.startingJdn ?? undefined);
+    const date = ref<string | undefined>(undefined);
+    const time = ref("12:00");
+
+    const dateParams = computed<DateParams | undefined>(() => {
+      if (
+        YMD.value.day == undefined ||
+        YMD.value.month == undefined ||
+        YMD.value.year == undefined
+      )
+        return;
+      const split = time.value.split(":");
+      return {
+        ...YMD.value,
+        hours: Number.parseInt(split[0]),
+        minutes: Number.parseInt(split[1]),
+      } as DateParams;
+    });
+
+    watch(
+      dateParams,
+      async (val) => {
+        if (val == undefined || !selectDate.value) return;
+        jdn.value = undefined;
+        let response: JdnResponse | undefined;
+        try {
+          response = await ymdToDate(props.calendar, val);
+        } catch (error) {
+          response = undefined;
+        }
+        if (val == dateParams.value) {
+          jdn.value = response?.jdn;
+          date.value = response?.date;
+        }
       },
-      jdn: ref<number | null>(this.startingJdn || null),
-      startingJdnFlag: this.startingJdn !== undefined,
-      date: ref<string | null>(null),
+      { immediate: true, deep: true }
+    );
+
+    const watchJdn = async (val: number) => {
+      let response: DateResponse | undefined;
+      response = await jdnToDate(props.calendar, val);
+      if (val == jdn.value) {
+        date.value = response.date;
+        const { hours, minutes } = fracToHM(response.frac);
+        YMD.value = {
+          day: response.ymd[2],
+          month: response.ymd[1],
+          year: response.ymd[0],
+        };
+        time.value = `${hours.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}`;
+      }
     };
-  },
-  watch: {
-    ymd: {
-      async handler(val) {
-        if (
-          !this.selectDate ||
-          val.day === null ||
-          val.month === null ||
-          val.year === null
+
+    watch(
+      jdn,
+      async (val) => {
+        if (selectDate.value || val == undefined) return;
+        try {
+          await watchJdn(val);
+        } catch {
+          if (val == jdn.value) YMD.value = emptyYMD;
+        }
+      },
+      { immediate: true }
+    );
+
+    if (props.startingJdn != undefined) {
+      selectDate.value = false;
+      watchJdn(props.startingJdn)
+        .then(() =>
+          emit("submit", {
+            ...dateParams.value,
+            date: date.value,
+            jdn: jdn.value,
+          })
         )
-          return;
-        this.jdn = null;
-        try {
-          const { jdn, date } = await ymdToDate(this.calendar, val);
-          this.jdn = jdn;
-          this.date = date;
-        } catch (error) {
-          if (val == this.ymd) this.jdn = null;
-        }
-      },
-      immediate: true,
-      deep: true,
-    },
-    jdn: {
-      async handler(val) {
-        if ((this.selectDate || val === null) && !this.startingJdnFlag) return;
-        let ymd: [number | null, number | null, number | null];
-        try {
-          const response = await jdnToDate(this.calendar, val);
-          this.date = response.date;
-          ymd = response.ymd;
-        } catch (error) {
-          ymd = [null, null, null];
-        }
-        if (val == this.jdn) {
-          this.ymd.day = ymd[2];
-          this.ymd.month = ymd[1];
-          this.ymd.year = ymd[0];
-        }
-        if (this.startingJdnFlag) {
-          this.$emit("submit", { ...this.ymd, date: this.date, jdn: this.jdn });
-          this.startingJdnFlag = false;
-        }
-      },
-      immediate: true,
-    },
+        .catch()
+        .finally(() => (selectDate.value = true));
+    }
+
+    return {
+      selectDate,
+      dateParams,
+      jdn,
+      date,
+      YMD,
+      time,
+    };
   },
 });
 </script>
