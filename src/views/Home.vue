@@ -43,7 +43,7 @@ const data = [
     subtitle: "Find positions of all celestial bodies at a given time",
     content:
       "Compute a horoscope with all planets and the ascendant with historical methods. \
-      Currently the only method available is with the Parisian Alphonsine Tables.",
+      Currently the only method available is using the Parisian Alphonsine Tables.",
   },
   {
     name: "Ephemerides",
@@ -52,7 +52,7 @@ const data = [
     content:
       "Display a list of positions from chosen celestial bodies with historical methods. \
       You can also compare the results with true positions computed by IMCCE. Currently the \
-      only method available is with the Parisian Alphonsine Tables.",
+      only method available is using the Parisian Alphonsine Tables.",
   },
   {
     name: "Calculator",

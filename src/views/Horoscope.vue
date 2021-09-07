@@ -1,7 +1,13 @@
 <template>
   <q-card class="my-card">
     <q-card-section>
-      <div class="text-h6">Horoscope {{ dateRepr }}</div>
+      <div class="row q-px-md">
+        <div class="text-h6 col">Horoscope</div>
+        <div class="text-caption col">
+          <div>{{ dateRepr }}</div>
+          <div>{{ coordinates }}</div>
+        </div>
+      </div>
     </q-card-section>
     <q-separator />
     <q-card-section class="row">
@@ -37,11 +43,16 @@
           </q-item-label>
           <q-skeleton type="text" v-else square height="18px" />
         </q-item-section>
-        <q-item-section side class="col-6">
+      </q-item>
+    </q-card-section>
+    <q-card-section>
+      <q-item class="q-mx-md">
+        <q-item-section>
+          <div class="text-overline">Latitude</div>
           <div class="row">
             <q-input
               label="Degrees"
-              v-model.number="degrees"
+              v-model.number="latitude.degrees"
               filled
               min="16"
               max="48"
@@ -49,7 +60,28 @@
             />
             <q-input
               label="Minutes"
-              v-model.number="minutes"
+              v-model.number="latitude.minutes"
+              filled
+              min="0"
+              max="59"
+              type="number"
+            />
+          </div>
+        </q-item-section>
+        <q-item-section>
+          <div class="text-overline">Longitude</div>
+          <div class="row">
+            <q-input
+              label="Degrees"
+              v-model.number="longitude.degrees"
+              filled
+              min="-179"
+              max="180"
+              type="number"
+            />
+            <q-input
+              label="Minutes"
+              v-model.number="longitude.minutes"
               filled
               min="0"
               max="59"
@@ -79,8 +111,14 @@ import DatePicker from "@/components/DatePicker.vue";
 import PositionDisplay from "@/components/PositionDisplay.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
-import { DateParams, getAscendant, getTruePosition } from "@/kanon-api";
-import { computed, defineComponent, ref } from "vue";
+import {
+  DateParams,
+  getAscendant,
+  getTruePosition,
+  jdnToDate,
+} from "@/kanon-api";
+import { fracToHM } from "@/utils";
+import { computed, defineComponent, reactive, ref } from "vue";
 
 export default defineComponent({
   name: "Horoscope",
@@ -94,10 +132,13 @@ export default defineComponent({
     const loading = ref(8);
 
     const dateRepr = ref("");
-    const degrees = ref(40);
-    const minutes = ref(0);
+    const longitude = reactive({ degrees: 2, minutes: 21 });
+    const latitude = reactive({ degrees: 48, minutes: 51 });
 
-    const latitude = computed(() => degrees.value + minutes.value / 60);
+    const coordinates = ref("");
+
+    const convertFloat = (sexa: { degrees: number; minutes: number }) =>
+      (Math.abs(sexa.degrees) + sexa.minutes / 60) * Math.sign(sexa.degrees);
 
     const positionParts = computed(() => {
       const arr = Array.from(positions.value)
@@ -116,12 +157,33 @@ export default defineComponent({
         jdn: number;
       } & DateParams
     ) => {
-      const { day, month, year, hours, minutes, date } = event;
+      const { date } = event;
       loading.value = 0;
       dateRepr.value = date;
+
+      coordinates.value = `φ ${latitude.degrees}°${latitude.minutes
+        .toString()
+        .padStart(2, "0")
+        .toString()
+        .padStart(2, "0")}" λ ${longitude.degrees}°${longitude.minutes
+        .toString()
+        .padStart(2, "0")} `;
+
+      const trueDate = await jdnToDate(
+        "Julian A.D.",
+        event.jdn +
+          (convertFloat(longitude) -
+            convertFloat({ degrees: -4, minutes: 1 })) /
+            360
+      );
+
+      const [year, month, day] = trueDate.ymd;
+
+      const { hours, minutes } = fracToHM(trueDate.frac);
+
       const ascendantPromise = getAscendant(
         { day, month, year, hours, minutes },
-        latitude.value
+        convertFloat(latitude)
       );
       const allPromises = Promise.all(
         Object.values(Planet).map(async (planet) => {
@@ -152,19 +214,22 @@ export default defineComponent({
       loading.value = 8;
     };
     const date = new Date();
-    const jdnToday = (
-      date.getTime() / 86400000 +
-      2440587.5 -
-      date.getTimezoneOffset() / 1440
-    ).toFixed(3);
+    const jdnToday = Number.parseFloat(
+      (
+        date.getTime() / 86400000 +
+        2440587.5 -
+        date.getTimezoneOffset() / 1440
+      ).toFixed(3)
+    );
     return {
       positions,
       ascendant,
       loading,
       dateRepr,
       jdnToday,
-      degrees,
-      minutes,
+      longitude,
+      latitude,
+      coordinates,
       onSubmit,
       positionParts,
     };
