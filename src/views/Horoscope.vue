@@ -32,13 +32,13 @@
 
         <q-item-section>
           <q-item-label> Ascendant </q-item-label>
-          <q-item-label caption v-if="ascendant && loading == 8">
+          <q-item-label caption v-if="houses.length > 0 && loading == 8">
             <SexaDegrees
-              :value="ascendant"
-              v-if="ascendant && ascendant !== 'ERROR'"
+              :value="houses[0]"
+              v-if="houses[0] && houses[0] !== 'ERROR'"
             />
             <div v-else style="color: red">
-              {{ ascendant }}
+              {{ houses[0] }}
             </div>
           </q-item-label>
           <q-skeleton type="text" v-else square height="18px" />
@@ -111,12 +111,7 @@ import DatePicker from "@/components/DatePicker.vue";
 import PositionDisplay from "@/components/PositionDisplay.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
-import {
-  DateParams,
-  getAscendant,
-  getTruePosition,
-  jdnToDate,
-} from "@/kanon-api";
+import { DateParams, getHouses, getTruePosition, jdnToDate } from "@/kanon-api";
 import { fracToHM } from "@/utils";
 import { computed, defineComponent, reactive, ref } from "vue";
 
@@ -128,7 +123,7 @@ export default defineComponent({
     Object.values(Planet).forEach((planet) => {
       positions.value.set(planet, "");
     });
-    const ascendant = ref("");
+    const houses = ref<string[]>([]);
     const loading = ref(8);
 
     const dateRepr = ref("");
@@ -181,7 +176,7 @@ export default defineComponent({
 
       const { hours, minutes } = fracToHM(trueDate.frac);
 
-      const ascendantPromise = getAscendant(
+      const housesPromise = getHouses(
         { day, month, year, hours, minutes },
         convertFloat(latitude)
       );
@@ -205,10 +200,10 @@ export default defineComponent({
         })
       );
       try {
-        ascendant.value = await ascendantPromise;
+        houses.value = await housesPromise;
         loading.value += 1;
       } catch (error) {
-        ascendant.value = "ERROR";
+        houses.value = ["ERROR"];
       }
       await allPromises;
       loading.value = 8;
@@ -223,7 +218,7 @@ export default defineComponent({
     );
     return {
       positions,
-      ascendant,
+      houses,
       loading,
       dateRepr,
       jdnToday,

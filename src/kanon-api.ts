@@ -117,16 +117,16 @@ export const getEphemerides = async (
   }));
 };
 
-export const getAscendant = async (
+export const getHouses = async (
   date: DateParams,
   latitude: number
-): Promise<string> => {
+): Promise<string[]> => {
   const response = (
-    await kanonClient.get<{ value: string }>(`ephemerides/ascendant/`, {
+    await kanonClient.get<string[]>(`ephemerides/houses/`, {
       params: { ...date, latitude },
     })
   ).data;
-  return response.value;
+  return response;
 };
 
 export const jdnToDate = async (
