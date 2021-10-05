@@ -4,8 +4,13 @@
       <div class="row q-px-md">
         <div class="text-h6 col">Horoscope</div>
         <div class="text-caption col">
-          <div>{{ dateRepr }}</div>
-          <div>{{ coordinates }}</div>
+          <div>{{ dateParts[0] }}</div>
+          <div class="row">
+            <div class="col-6">{{ dateParts[1] }}</div>
+            <div class="col-6 text-right">
+              {{ coordinates }}
+            </div>
+          </div>
         </div>
       </div>
     </q-card-section>
@@ -220,13 +225,13 @@ export default defineComponent({
       positions,
       houses,
       loading,
-      dateRepr,
       jdnToday,
       longitude,
       latitude,
       coordinates,
       onSubmit,
       positionParts,
+      dateParts: computed(() => dateRepr.value.split(" in Julian ")),
     };
   },
 });
