@@ -15,20 +15,36 @@
       </div>
     </q-card-section>
     <q-separator />
-    <q-card-section class="row">
-      <q-card-section class="col">
-        <PositionDisplay
-          :loading="loading < 8"
-          :planetPositions="positionParts[0]"
-        />
+    <div class="row">
+      <q-card-section class="row">
+        <q-card-section class="col">
+          <PositionDisplay
+            :loading="loading < 8"
+            :planetPositions="positionParts[0]"
+          />
+        </q-card-section>
+        <q-card-section class="col">
+          <PositionDisplay
+            :loading="loading < 8"
+            :planetPositions="positionParts[1]"
+          />
+        </q-card-section>
+        <q-card-section class="col">
+          <q-list dense>
+            <q-item-label header>Houses</q-item-label>
+            <q-item clickable v-for="(house, idx) in houses" :key="house">
+              <q-item-section avatar>
+                {{ idx + 1 }}
+              </q-item-section>
+
+              <q-item-section>
+                <SexaDegrees :value="house" />
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-card-section>
       </q-card-section>
-      <q-card-section class="col">
-        <PositionDisplay
-          :loading="loading < 8"
-          :planetPositions="positionParts[1]"
-        />
-      </q-card-section>
-    </q-card-section>
+    </div>
     <q-card-section>
       <q-item clickable class="q-mx-md">
         <q-item-section avatar>
@@ -51,8 +67,8 @@
       </q-item>
     </q-card-section>
     <q-card-section>
-      <q-item class="q-mx-md">
-        <q-item-section>
+      <q-item class="q-mx-md justify-center">
+        <q-item-section class="col-auto">
           <div class="text-overline">Latitude</div>
           <div class="row">
             <q-input
@@ -73,7 +89,7 @@
             />
           </div>
         </q-item-section>
-        <q-item-section>
+        <q-item-section class="col-auto">
           <div class="text-overline">Longitude</div>
           <div class="row">
             <q-input
@@ -239,6 +255,5 @@ export default defineComponent({
 
 <style lang="sass" scoped>
 .my-card
-  width: 100%
-  max-width: 500px
+  display: inline-block
 </style>
