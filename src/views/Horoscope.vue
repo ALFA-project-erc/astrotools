@@ -4,50 +4,66 @@
       <div class="row q-px-md">
         <div class="text-h6 col">Horoscope</div>
         <div class="text-caption col">
-          <div>{{ dateRepr }}</div>
-          <div>{{ coordinates }}</div>
+          <div>{{ dateParts[0] }}</div>
+          <div class="row">
+            <div class="col-6">{{ dateParts[1] }}</div>
+            <div class="col-6 text-right">
+              {{ coordinates }}
+            </div>
+          </div>
         </div>
       </div>
     </q-card-section>
     <q-separator />
-    <q-card-section class="row">
-      <q-card-section class="col">
+    <q-card-section
+      class="row q-px-xl q-pt-lg"
+    >
+      <q-item
+        v-for="pp in positions"
+        :key="pp.planet"
+        class="col-xs-12 col-sm-6 col-md-6 q-px-none q-py-none"
+      >
         <PositionDisplay
           :loading="loading < 8"
-          :planetPositions="positionParts[0]"
+          :position="pp.position"
+          :name="pp.planet"
         />
-      </q-card-section>
-      <q-card-section class="col">
-        <PositionDisplay
-          :loading="loading < 8"
-          :planetPositions="positionParts[1]"
-        />
-      </q-card-section>
-    </q-card-section>
-    <q-card-section>
-      <q-item clickable class="q-mx-md">
-        <q-item-section avatar>
-          <q-icon color="primary" name="img:svg/ascendant.svg" />
-        </q-item-section>
-
-        <q-item-section>
-          <q-item-label> Ascendant </q-item-label>
-          <q-item-label caption v-if="ascendant && loading == 8">
-            <SexaDegrees
-              :value="ascendant"
-              v-if="ascendant && ascendant !== 'ERROR'"
-            />
-            <div v-else style="color: red">
-              {{ ascendant }}
-            </div>
-          </q-item-label>
-          <q-skeleton type="text" v-else square height="18px" />
-        </q-item-section>
       </q-item>
     </q-card-section>
     <q-card-section>
-      <q-item class="q-mx-md">
-        <q-item-section>
+      <q-expansion-item class="q-mx-md" expand-icon-toggle>
+        <template v-slot:header>
+          <PositionDisplay
+            :loading="false"
+            :position="houses[0]"
+            name="ascendant"
+          />
+          <q-item-section class="col-1"> </q-item-section>
+        </template>
+        <q-card-section class="q-pt-none">
+          <q-list dense>
+            <template v-for="(house, idx) in houses" :key="house">
+              <q-item v-if="idx > 0">
+                <q-item-section class="col-1">
+                  <q-item-label overline>
+                    {{ idx + 1 }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section class="col-shrink">
+                  <q-item-label caption>
+                    <SexaDegrees :value="house" />
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-list>
+        </q-card-section>
+      </q-expansion-item>
+    </q-card-section>
+    <q-separator />
+    <q-card-section>
+      <q-item class="q-mx-md justify-center">
+        <q-item-section class="col-auto">
           <div class="text-overline">Latitude</div>
           <div class="row">
             <q-input
@@ -68,7 +84,7 @@
             />
           </div>
         </q-item-section>
-        <q-item-section>
+        <q-item-section class="col-auto">
           <div class="text-overline">Longitude</div>
           <div class="row">
             <q-input
@@ -111,12 +127,7 @@ import DatePicker from "@/components/DatePicker.vue";
 import PositionDisplay from "@/components/PositionDisplay.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
-import {
-  DateParams,
-  getAscendant,
-  getTruePosition,
-  jdnToDate,
-} from "@/kanon-api";
+import { DateParams, getHouses, getTruePosition, jdnToDate } from "@/kanon-api";
 import { fracToHM } from "@/utils";
 import { computed, defineComponent, reactive, ref } from "vue";
 
@@ -128,7 +139,7 @@ export default defineComponent({
     Object.values(Planet).forEach((planet) => {
       positions.value.set(planet, "");
     });
-    const ascendant = ref("");
+    const houses = ref<string[]>([]);
     const loading = ref(8);
 
     const dateRepr = ref("");
@@ -139,17 +150,6 @@ export default defineComponent({
 
     const convertFloat = (sexa: { degrees: number; minutes: number }) =>
       (Math.abs(sexa.degrees) + sexa.minutes / 60) * Math.sign(sexa.degrees);
-
-    const positionParts = computed(() => {
-      const arr = Array.from(positions.value)
-        .sort()
-        .map((entry) => ({
-          planet: entry[0],
-          position: entry[1],
-        }));
-      const half = Math.ceil(arr.length / 2);
-      return [arr.splice(0, half), arr.splice(-half)];
-    });
 
     const onSubmit = async (
       event: {
@@ -181,7 +181,7 @@ export default defineComponent({
 
       const { hours, minutes } = fracToHM(trueDate.frac);
 
-      const ascendantPromise = getAscendant(
+      const housesPromise = getHouses(
         { day, month, year, hours, minutes },
         convertFloat(latitude)
       );
@@ -205,10 +205,10 @@ export default defineComponent({
         })
       );
       try {
-        ascendant.value = await ascendantPromise;
+        houses.value = await housesPromise;
         loading.value += 1;
       } catch (error) {
-        ascendant.value = "ERROR";
+        houses.value = ["ERROR"];
       }
       await allPromises;
       loading.value = 8;
@@ -222,16 +222,22 @@ export default defineComponent({
       ).toFixed(3)
     );
     return {
-      positions,
-      ascendant,
+      houses,
       loading,
-      dateRepr,
       jdnToday,
       longitude,
       latitude,
       coordinates,
       onSubmit,
-      positionParts,
+      positions: computed(() =>
+        Array.from(positions.value)
+          .sort()
+          .map((entry) => ({
+            planet: entry[0],
+            position: entry[1],
+          }))
+      ),
+      dateParts: computed(() => dateRepr.value.split(" in Julian ")),
     };
   },
 });
@@ -239,6 +245,6 @@ export default defineComponent({
 
 <style lang="sass" scoped>
 .my-card
-  width: 100%
-  max-width: 500px
+  display: inline-block
+  max-width: 33rem
 </style>
