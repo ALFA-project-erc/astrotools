@@ -15,57 +15,52 @@
       </div>
     </q-card-section>
     <q-separator />
-    <div class="row">
-      <q-card-section class="row">
-        <q-card-section class="col">
-          <PositionDisplay
-            :loading="loading < 8"
-            :planetPositions="positionParts[0]"
-          />
-        </q-card-section>
-        <q-card-section class="col">
-          <PositionDisplay
-            :loading="loading < 8"
-            :planetPositions="positionParts[1]"
-          />
-        </q-card-section>
-        <q-card-section class="col">
-          <q-list dense>
-            <q-item-label header>Houses</q-item-label>
-            <q-item clickable v-for="(house, idx) in houses" :key="house">
-              <q-item-section avatar>
-                {{ idx + 1 }}
-              </q-item-section>
-
-              <q-item-section>
-                <SexaDegrees :value="house" />
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-      </q-card-section>
-    </div>
-    <q-card-section>
-      <q-item clickable class="q-mx-md">
-        <q-item-section avatar>
-          <q-icon color="primary" name="img:svg/ascendant.svg" />
-        </q-item-section>
-
-        <q-item-section>
-          <q-item-label> Ascendant </q-item-label>
-          <q-item-label caption v-if="houses.length > 0 && loading == 8">
-            <SexaDegrees
-              :value="houses[0]"
-              v-if="houses[0] && houses[0] !== 'ERROR'"
-            />
-            <div v-else style="color: red">
-              {{ houses[0] }}
-            </div>
-          </q-item-label>
-          <q-skeleton type="text" v-else square height="18px" />
-        </q-item-section>
+    <q-card-section
+      class="row q-px-xl q-pt-lg"
+    >
+      <q-item
+        v-for="pp in positions"
+        :key="pp.planet"
+        class="col-xs-12 col-sm-6 col-md-6 q-px-none q-py-none"
+      >
+        <PositionDisplay
+          :loading="loading < 8"
+          :position="pp.position"
+          :name="pp.planet"
+        />
       </q-item>
     </q-card-section>
+    <q-card-section>
+      <q-expansion-item class="q-mx-md" expand-icon-toggle>
+        <template v-slot:header>
+          <PositionDisplay
+            :loading="false"
+            :position="houses[0]"
+            name="ascendant"
+          />
+          <q-item-section class="col-1"> </q-item-section>
+        </template>
+        <q-card-section class="q-pt-none">
+          <q-list dense>
+            <template v-for="(house, idx) in houses" :key="house">
+              <q-item v-if="idx > 0">
+                <q-item-section class="col-1">
+                  <q-item-label overline>
+                    {{ idx + 1 }}
+                  </q-item-label>
+                </q-item-section>
+                <q-item-section class="col-shrink">
+                  <q-item-label caption>
+                    <SexaDegrees :value="house" />
+                  </q-item-label>
+                </q-item-section>
+              </q-item>
+            </template>
+          </q-list>
+        </q-card-section>
+      </q-expansion-item>
+    </q-card-section>
+    <q-separator />
     <q-card-section>
       <q-item class="q-mx-md justify-center">
         <q-item-section class="col-auto">
@@ -156,17 +151,6 @@ export default defineComponent({
     const convertFloat = (sexa: { degrees: number; minutes: number }) =>
       (Math.abs(sexa.degrees) + sexa.minutes / 60) * Math.sign(sexa.degrees);
 
-    const positionParts = computed(() => {
-      const arr = Array.from(positions.value)
-        .sort()
-        .map((entry) => ({
-          planet: entry[0],
-          position: entry[1],
-        }));
-      const half = Math.ceil(arr.length / 2);
-      return [arr.splice(0, half), arr.splice(-half)];
-    });
-
     const onSubmit = async (
       event: {
         date: string;
@@ -238,7 +222,6 @@ export default defineComponent({
       ).toFixed(3)
     );
     return {
-      positions,
       houses,
       loading,
       jdnToday,
@@ -246,7 +229,14 @@ export default defineComponent({
       latitude,
       coordinates,
       onSubmit,
-      positionParts,
+      positions: computed(() =>
+        Array.from(positions.value)
+          .sort()
+          .map((entry) => ({
+            planet: entry[0],
+            position: entry[1],
+          }))
+      ),
       dateParts: computed(() => dateRepr.value.split(" in Julian ")),
     };
   },
@@ -256,4 +246,5 @@ export default defineComponent({
 <style lang="sass" scoped>
 .my-card
   display: inline-block
+  max-width: 33rem
 </style>

@@ -57,4 +57,5 @@ export default defineComponent({
 div
   white-space: nowrap
   overflow: hidden
+  cursor: pointer
 </style>

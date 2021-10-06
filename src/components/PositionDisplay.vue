@@ -1,33 +1,26 @@
 <template>
-  <q-list>
-    <q-item clickable v-for="pp in planetPositions" :key="pp.planet">
-      <q-item-section avatar>
-        <q-icon
-          :style="{
-            'background-color': `${colors[pp.planet]}`,
-            '-webkit-mask': `url(svg/${pp.planet}.svg) no-repeat center`,
-            mask: `url(svg/${pp.planet}.svg) no-repeat center`,
-          }"
-          :color="pp.planet"
-          :name="`img:svg/${pp.planet}.svg`"
-        />
-      </q-item-section>
+  <q-item-section avatar>
+    <q-icon
+      :style="{
+        'background-color': `${colors[name]}`,
+        '-webkit-mask': `url(svg/${name}.svg) no-repeat center`,
+        mask: `url(svg/${name}.svg) no-repeat center`,
+      }"
+      :color="name"
+      :name="`img:svg/${name}.svg`"
+    />
+  </q-item-section>
 
-      <q-item-section>
-        <q-item-label>{{ capitalize(pp.planet) }}</q-item-label>
-        <q-item-label caption v-if="!loading && pp.position">
-          <SexaDegrees
-            :value="pp.position"
-            v-if="pp.position && pp.position !== 'ERROR'"
-          />
-          <div v-else style="color: red">
-            {{ pp.position }}
-          </div>
-        </q-item-label>
-        <q-skeleton type="text" v-else square height="18px" />
-      </q-item-section>
-    </q-item>
-  </q-list>
+  <q-item-section class="col-shrink">
+    <q-item-label>{{ capitalize(name) }}</q-item-label>
+    <q-item-label caption v-if="!loading && position">
+      <SexaDegrees :value="position" v-if="position && position !== 'ERROR'" />
+      <div v-else style="color: red">
+        {{ position }}
+      </div>
+    </q-item-label>
+    <q-skeleton type="text" v-else square height="18px" width="5rem" />
+  </q-item-section>
 </template>
 
 <script lang="ts">
@@ -38,11 +31,8 @@ export default defineComponent({
   components: { SexaDegrees },
   name: "PositionDisplay",
   props: {
-    planetPositions: {
-      type: Object,
-      validator: (props: { planet: string; position: string }[]) =>
-        props.every((val) => "planet" in val && "position" in val),
-    },
+    name: String,
+    position: String,
     loading: Boolean,
   },
   data() {
@@ -63,3 +53,8 @@ export default defineComponent({
   },
 });
 </script>
+
+<style lang="sass" scoped>
+template
+  display: inline-block
+</style>
