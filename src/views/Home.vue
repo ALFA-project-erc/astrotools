@@ -4,7 +4,7 @@
     <div class="row q-gutter-xl justify-center">
       <q-card
         v-for="feat in featData"
-        :key="feat"
+        :key="feat.name"
         class="featcard text-white col-4"
         @click="routeTo(feat.name)"
       >
@@ -32,11 +32,10 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
 import { useRouter } from "vue-router";
 
-const data = [
+const featData = [
   {
     name: "Horoscope",
     icon: "brightness_4",
@@ -72,17 +71,8 @@ const data = [
   },
 ];
 
-export default defineComponent({
-  name: "Home",
-  setup() {
-    const router = useRouter();
-    return {
-      featData: data,
-      routeTo: (name: string) => router.push({ name }),
-    };
-  },
-  components: {},
-});
+const router = useRouter();
+const routeTo = (name: string) => router.push({ name });
 </script>
 
 <style scoped>

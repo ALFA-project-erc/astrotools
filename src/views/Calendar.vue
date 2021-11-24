@@ -79,12 +79,12 @@
             </thead>
             <tbody>
               <tr>
-                <td class="text-left">{{ conversionInput.date }}</td>
-                <td class="text-right">{{ conversionResult.date }}</td>
+                <td class="text-left">{{ conversionInput?.date }}</td>
+                <td class="text-right">{{ conversionResult?.date }}</td>
               </tr>
               <tr>
-                <td class="text-right">{{ conversionInput.ymd.join("/") }}</td>
-                <td class="text-left">{{ conversionResult.ymd.join("/") }}</td>
+                <td class="text-right">{{ conversionInput?.ymd.join("/") }}</td>
+                <td class="text-left">{{ conversionResult?.ymd.join("/") }}</td>
               </tr>
             </tbody>
           </q-markup-table>
@@ -94,7 +94,7 @@
   </q-card>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import DatePicker from "@/components/DatePicker.vue";
 import {
   CalendarInfos,
@@ -103,95 +103,76 @@ import {
   getOpenAPISchema,
   jdnToDate,
 } from "@/kanon-api";
-import { defineComponent, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 
-export default defineComponent({
-  components: { DatePicker },
-  setup() {
-    const calendars = ref<string[]>([]);
-    const selectedCalendar = ref<string | null>(null);
-    const selectedConvertTo = ref<string | null>(null);
+const calendars = ref<string[]>([]);
+const selectedCalendar = ref<string | undefined>(undefined);
+const selectedConvertTo = ref<string | undefined>(undefined);
 
-    onMounted(async () => {
-      calendars.value = (
-        await getOpenAPISchema()
-      ).components.schemas.SupportedCalendars.enum;
-      selectedCalendar.value = calendars.value[0];
-      selectedConvertTo.value = calendars.value[0];
-    });
+onMounted(async () => {
+  calendars.value = (
+    await getOpenAPISchema()
+  ).components.schemas.SupportedCalendars.enum;
+  selectedCalendar.value = calendars.value[0];
+  selectedConvertTo.value = calendars.value[0];
+});
 
-    const infoLoading = ref(false);
-    const convertLoading = ref(false);
-    const calendarInfos = ref<CalendarInfos | null>(null);
+const infoLoading = ref(false);
+const convertLoading = ref(false);
+const calendarInfos = ref<CalendarInfos | undefined>(undefined);
 
-    watch(selectedCalendar, async () => {
-      if (!selectedCalendar.value) return;
-      conversionResult.value = null;
-      conversionInput.value = null;
-      infoLoading.value = true;
-      try {
-        calendarInfos.value = await getCalendarInfos(selectedCalendar.value);
-      } catch (error) {
-        calendarInfos.value = null;
-      }
-      infoLoading.value = false;
-    });
+watch(selectedCalendar, async () => {
+  if (!selectedCalendar.value) return;
+  conversionResult.value = undefined;
+  conversionInput.value = undefined;
+  infoLoading.value = true;
+  try {
+    calendarInfos.value = await getCalendarInfos(selectedCalendar.value);
+  } catch (error) {
+    calendarInfos.value = undefined;
+  }
+  infoLoading.value = false;
+});
 
-    const conversionResult = ref<DateResponse | null>(null);
-    const conversionInput = ref<DateResponse | null>(null);
+const conversionResult = ref<DateResponse | undefined>(undefined);
+const conversionInput = ref<DateResponse | undefined>(undefined);
 
-    const convert = async ({
-      jdn,
-      date,
-      day,
-      month,
-      year,
-    }: {
-      jdn: number;
-      date: string;
-      day: number;
-      month: number;
-      year: number;
-    }) => {
-      if (!selectedConvertTo.value) return;
-      convertLoading.value = true;
-      conversionInput.value = { date, ymd: [year, month, day], frac: 0.5 };
-      try {
-        conversionResult.value = await jdnToDate(selectedConvertTo.value, jdn);
-      } catch (error) {
-        conversionResult.value = {
-          date: error.response,
-          ymd: [0, 0, 0],
-          frac: 0.5,
-        };
-      }
-      convertLoading.value = false;
+const convert = async ({
+  jdn,
+  date,
+  day,
+  month,
+  year,
+}: {
+  jdn: number;
+  date: string;
+  day: number;
+  month: number;
+  year: number;
+}) => {
+  if (!selectedConvertTo.value) return;
+  convertLoading.value = true;
+  conversionInput.value = { date, ymd: [year, month, day], frac: 0.5 };
+  try {
+    conversionResult.value = await jdnToDate(selectedConvertTo.value, jdn);
+  } catch (error) {
+    conversionResult.value = {
+      date: (error as { response: string }).response,
+      ymd: [0, 0, 0],
+      frac: 0.5,
     };
+  }
+  convertLoading.value = false;
+};
 
-    return {
-      calendars,
-      selectedCalendar,
-      selectedConvertTo,
-      infoLoading,
-      convertLoading,
-      calendarInfos,
-      tab: ref("one"),
-      convert,
-      conversionInput,
-      conversionResult,
-    };
-  },
-  computed: {
-    maxDays(): number {
-      if (!this.calendarInfos) return 0;
-      return Math.max(
-        ...this.calendarInfos.months.map((m) => m.days_ly || m.days_cy)
-      );
-    },
-    maxMonth(): number {
-      if (!this.calendarInfos) return 0;
-      return this.calendarInfos.months.length;
-    },
-  },
+const maxDays = computed((): number => {
+  if (!calendarInfos.value) return 0;
+  return Math.max(
+    ...calendarInfos.value.months.map((m) => m.days_ly || m.days_cy)
+  );
+});
+const maxMonth = computed((): number => {
+  if (!calendarInfos.value) return 0;
+  return calendarInfos.value.months.length;
 });
 </script>

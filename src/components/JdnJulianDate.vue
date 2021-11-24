@@ -4,51 +4,46 @@
   </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { jdnToDate } from "@/kanon-api";
-import { defineComponent } from "vue";
+import { ref, watch, defineProps, withDefaults } from "vue";
+const props = withDefaults(
+  defineProps<{
+    jdn: number;
+    showProp?: number;
+  }>(),
+  { showProp: 1 }
+);
 
-export default defineComponent({
-  props: {
-    jdn: {
-      type: Number,
-      required: true,
-    },
-    showProp: { type: Number, default: 1 },
+const show = ref(props.showProp);
+const date = ref("");
+const ymd = ref("");
+
+watch(
+  () => props.showProp,
+  (val: number) => {
+    show.value = val;
   },
-  data() {
-    return {
-      show: 1,
-      date: "",
-      ymd: "",
-    };
+  { immediate: true }
+);
+watch(
+  () => props.jdn,
+  async (val: number) => {
+    try {
+      const res = await jdnToDate("Julian A.D.", val);
+      date.value = res.date;
+      ymd.value =
+        res.ymd[0].toString() +
+        "/" +
+        res.ymd
+          .slice(1, 3)
+          .map((v) => v.toString().padStart(2, "0"))
+          .join("/");
+    } catch (error) {
+      date.value = "";
+      ymd.value = "";
+    }
   },
-  watch: {
-    showProp: {
-      immediate: true,
-      handler(val) {
-        this.show = val;
-      },
-    },
-    jdn: {
-      async handler(val) {
-        try {
-          const res = await jdnToDate("Julian A.D.", val);
-          this.date = res.date;
-          this.ymd =
-            res.ymd[0].toString() +
-            "/" +
-            res.ymd
-              .slice(1, 3)
-              .map((v) => v.toString().padStart(2, "0"))
-              .join("/");
-        } catch (error) {
-          this.date = "";
-          this.ymd = "";
-        }
-      },
-      immediate: true,
-    },
-  },
-});
+  { immediate: true }
+);
 </script>

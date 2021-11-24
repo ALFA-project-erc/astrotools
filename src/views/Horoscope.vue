@@ -1,5 +1,5 @@
 <template>
-  <q-card class="my-card">
+  <q-card class="horoscope-card">
     <q-card-section>
       <div class="row q-px-md">
         <div class="text-h6 col">Horoscope</div>
@@ -15,9 +15,7 @@
       </div>
     </q-card-section>
     <q-separator />
-    <q-card-section
-      class="row q-px-xl q-pt-lg"
-    >
+    <q-card-section class="row q-px-xl q-pt-lg">
       <q-item
         v-for="pp in positions"
         :key="pp.planet"
@@ -122,129 +120,79 @@
   </q-card>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import DatePicker from "@/components/DatePicker.vue";
 import PositionDisplay from "@/components/PositionDisplay.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
-import { DateParams, getHouses, getTruePosition, jdnToDate } from "@/kanon-api";
-import { fracToHM } from "@/utils";
-import { computed, defineComponent, reactive, ref } from "vue";
+import { DateParams, getHouses, getTruePosition } from "@/kanon-api";
+import { convertFloat, pad2 } from "@/utils";
+import { computed, reactive, ref } from "vue";
 
-export default defineComponent({
-  name: "Horoscope",
-  components: { DatePicker, PositionDisplay, SexaDegrees },
-  setup() {
-    const positions = ref(new Map<Planet, string>());
-    Object.values(Planet).forEach((planet) => {
-      positions.value.set(planet, "");
-    });
-    const houses = ref<string[]>([]);
-    const loading = ref(8);
+const positions = ref(
+  Object.values(Planet).map((p) => ({ planet: p, position: "" }))
+);
 
-    const dateRepr = ref("");
-    const longitude = reactive({ degrees: 2, minutes: 21 });
-    const latitude = reactive({ degrees: 48, minutes: 51 });
+const houses = ref<string[]>([""]);
+const loading = ref(8);
 
-    const coordinates = ref("");
+const dateRepr = ref("");
+const longitude = reactive({ degrees: 2, minutes: 21 });
+const latitude = reactive({ degrees: 48, minutes: 51 });
 
-    const convertFloat = (sexa: { degrees: number; minutes: number }) =>
-      (Math.abs(sexa.degrees) + sexa.minutes / 60) * Math.sign(sexa.degrees);
+const coordinates = ref("");
 
-    const onSubmit = async (
-      event: {
-        date: string;
-        jdn: number;
-      } & DateParams
-    ) => {
-      const { date } = event;
-      loading.value = 0;
-      dateRepr.value = date;
+const onSubmit = async (
+  event: {
+    date: string;
+    jdn: number;
+  } & DateParams
+) => {
+  const { date, year, month, day, minutes, hours } = event;
+  loading.value = 0;
+  dateRepr.value = date;
 
-      coordinates.value = `φ ${latitude.degrees}°${latitude.minutes
-        .toString()
-        .padStart(2, "0")
-        .toString()
-        .padStart(2, "0")}" λ ${longitude.degrees}°${longitude.minutes
-        .toString()
-        .padStart(2, "0")} `;
+  coordinates.value =
+    `φ ${latitude.degrees}°${pad2(latitude.minutes)}" ` +
+    `λ ${longitude.degrees}°${pad2(longitude.minutes)}`;
 
-      const trueDate = await jdnToDate(
-        "Julian A.D.",
-        event.jdn +
-          (convertFloat(longitude) -
-            convertFloat({ degrees: -4, minutes: 1 })) /
-            360
-      );
+  const dateParams: DateParams = { day, month, year, hours, minutes };
 
-      const [year, month, day] = trueDate.ymd;
-
-      const { hours, minutes } = fracToHM(trueDate.frac);
-
-      const housesPromise = getHouses(
-        { day, month, year, hours, minutes },
-        convertFloat(latitude)
-      );
-      const allPromises = Promise.all(
-        Object.values(Planet).map(async (planet) => {
-          try {
-            positions.value.set(
-              planet,
-              await getTruePosition(planet, {
-                day,
-                month,
-                year,
-                hours,
-                minutes,
-              })
-            );
-          } catch (error) {
-            positions.value.set(planet, "ERROR");
-          }
-          loading.value += 1;
-        })
-      );
+  const housesPromise = getHouses(dateParams, convertFloat(latitude));
+  const allPromises = Promise.all(
+    positions.value.map(async ({ planet }, idx) => {
+      let mess: string;
       try {
-        houses.value = await housesPromise;
-        loading.value += 1;
+        mess = await getTruePosition(planet, dateParams);
       } catch (error) {
-        houses.value = ["ERROR"];
+        mess = "ERROR";
       }
-      await allPromises;
-      loading.value = 8;
-    };
-    const date = new Date();
-    const jdnToday = Number.parseFloat(
-      (
-        date.getTime() / 86400000 +
-        2440587.5 -
-        date.getTimezoneOffset() / 1440
-      ).toFixed(3)
-    );
-    return {
-      houses,
-      loading,
-      jdnToday,
-      longitude,
-      latitude,
-      coordinates,
-      onSubmit,
-      positions: computed(() =>
-        Array.from(positions.value)
-          .sort()
-          .map((entry) => ({
-            planet: entry[0],
-            position: entry[1],
-          }))
-      ),
-      dateParts: computed(() => dateRepr.value.split(" in Julian ")),
-    };
-  },
-});
+      positions.value[idx] = { planet: planet, position: mess };
+      loading.value += 1;
+    })
+  );
+  try {
+    houses.value = await housesPromise;
+  } catch (error) {
+    houses.value = ["ERROR"];
+  }
+  loading.value += 1;
+  await allPromises;
+  loading.value = 8;
+};
+const date = new Date();
+const jdnToday = Number.parseFloat(
+  (
+    date.getTime() / 86400000 +
+    2440587.5 -
+    date.getTimezoneOffset() / 1440
+  ).toFixed(3)
+);
+const dateParts = computed(() => dateRepr.value.split(" in Julian "));
 </script>
 
 <style lang="sass" scoped>
-.my-card
+.horoscope-card
   display: inline-block
   max-width: 33rem
 </style>

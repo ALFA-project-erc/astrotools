@@ -1,5 +1,5 @@
 <template>
-  <q-form class="row" @submit="$emit('submit', { ...dateParams, jdn, date })">
+  <q-form class="row" @submit="submit">
     <div class="column" v-if="selectDate">
       <div class="row q-gutter-sm">
         <q-input
@@ -9,7 +9,7 @@
           type="number"
           filled
           lazy-rules
-          :rules="[(val) => val != undefined || 'Invalid']"
+          :rules="[(val: any) => val != undefined || 'Invalid']"
         />
         <q-input
           label="Month"
@@ -20,7 +20,7 @@
           min="1"
           :max="maxMonth"
           :rules="[
-            (val) =>
+            (val: any) =>
               (val != undefined && val > 0 && val <= maxMonth) || 'Invalid',
           ]"
         />
@@ -33,7 +33,7 @@
           min="1"
           :max="maxDays"
           :rules="[
-            (val) =>
+            (val: any) =>
               (val != undefined && val > 0 && val <= maxDays) || 'Invalid',
           ]"
         />
@@ -63,7 +63,7 @@
         step="any"
         filled
         lazy-rules
-        :rules="[(val) => val != undefined || 'Invalid']"
+        :rules="[(val: any) => val != undefined || 'Invalid']"
       />
     </div>
     <q-separator vertical dark size="5px" />
@@ -85,7 +85,7 @@
   </q-form>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   DateParams,
   DateResponse,
@@ -93,139 +93,127 @@ import {
   jdnToDate,
   ymdToDate,
 } from "@/kanon-api";
-import { fracToHM } from "@/utils";
-import { computed, defineComponent, ref, watch } from "vue";
+import { fracToHM, pad2 } from "@/utils";
+import {
+  computed,
+  reactive,
+  ref,
+  watch,
+  defineProps,
+  defineEmits,
+  withDefaults,
+} from "vue";
 
-const emptyYMD = {
-  day: undefined,
-  month: undefined,
-  year: undefined,
+const props = withDefaults(
+  defineProps<{
+    loading?: boolean;
+    percentage?: number;
+    calendar: string;
+    maxDays: number;
+    maxMonth: number;
+    startingJdn?: number;
+    withTime?: boolean;
+  }>(),
+  { withTime: false }
+);
+
+const emits = defineEmits<{
+  (
+    e: "submit",
+    data: {
+      date: string;
+      jdn: number;
+    } & DateParams
+  ): void;
+}>();
+
+const selectDate = ref(true);
+const YMD = reactive<{
+  day?: number;
+  month?: number;
+  year?: number;
+}>({ day: undefined, month: undefined, year: undefined });
+const jdn = ref<number | undefined>(props.startingJdn);
+const date = ref<string | undefined>(undefined);
+const time = ref("12:00");
+
+const dateParams = computed<DateParams | undefined>(() => {
+  if (YMD.day == undefined || YMD.month == undefined || YMD.year == undefined)
+    return;
+  const split = time.value.split(":");
+  return {
+    ...YMD,
+    hours: Number.parseInt(split[0]),
+    minutes: Number.parseInt(split[1]),
+  } as DateParams;
+});
+
+const submit = () => {
+  if (dateParams.value && jdn.value && date.value)
+    emits("submit", { ...dateParams.value, jdn: jdn.value, date: date.value });
 };
 
-export default defineComponent({
-  name: "DatePicker",
-  props: {
-    loading: Boolean,
-    percentage: Number,
-    calendar: { type: String, required: true },
-    maxDays: { type: Number, required: true },
-    maxMonth: { type: Number, required: true },
-    startingJdn: Number,
-    withTime: { type: Boolean, default: false },
-  },
-  emits: {
-    submit: (data: {
-      day?: number;
-      month?: number;
-      year?: number;
-      hours?: number;
-      minutes?: number;
-      date: string | undefined;
-      jdn: number | undefined;
-    }) =>
-      data.day != undefined &&
-      data.month != undefined &&
-      data.year != undefined,
-  },
-  setup(props, { emit }) {
-    const selectDate = ref(true);
-    const YMD = ref<{
-      day: number | undefined;
-      month: number | undefined;
-      year: number | undefined;
-    }>(emptyYMD);
-    const jdn = ref<number | undefined>(props.startingJdn ?? undefined);
-    const date = ref<string | undefined>(undefined);
-    const time = ref("12:00");
-
-    const dateParams = computed<DateParams | undefined>(() => {
-      if (
-        YMD.value.day == undefined ||
-        YMD.value.month == undefined ||
-        YMD.value.year == undefined
-      )
-        return;
-      const split = time.value.split(":");
-      return {
-        ...YMD.value,
-        hours: Number.parseInt(split[0]),
-        minutes: Number.parseInt(split[1]),
-      } as DateParams;
-    });
-
-    watch(
-      dateParams,
-      async (val) => {
-        if (val == undefined || !selectDate.value) return;
-        jdn.value = undefined;
-        let response: JdnResponse | undefined;
-        try {
-          response = await ymdToDate(props.calendar, val);
-        } catch (error) {
-          response = undefined;
-        }
-        if (val == dateParams.value) {
-          jdn.value = response?.jdn;
-          date.value = response?.date;
-        }
-      },
-      { immediate: true, deep: true }
-    );
-
-    const watchJdn = async (val: number) => {
-      let response: DateResponse | undefined;
-      response = await jdnToDate(props.calendar, val);
-      if (val == jdn.value) {
-        date.value = response.date;
-        const { hours, minutes } = fracToHM(response.frac);
-        YMD.value = {
-          day: response.ymd[2],
-          month: response.ymd[1],
-          year: response.ymd[0],
-        };
-        time.value = `${hours.toString().padStart(2, "0")}:${minutes
-          .toString()
-          .padStart(2, "0")}`;
-      }
-    };
-
-    watch(
-      jdn,
-      async (val) => {
-        if (selectDate.value || val == undefined) return;
-        try {
-          await watchJdn(val);
-        } catch {
-          if (val == jdn.value) YMD.value = emptyYMD;
-        }
-      },
-      { immediate: true }
-    );
-
-    if (props.startingJdn != undefined) {
-      selectDate.value = false;
-      watchJdn(props.startingJdn)
-        .then(() =>
-          emit("submit", {
-            ...dateParams.value,
-            date: date.value,
-            jdn: jdn.value,
-          })
-        )
-        .catch()
-        .finally(() => (selectDate.value = true));
+watch(
+  dateParams,
+  async (val) => {
+    if (val == undefined || !selectDate.value) return;
+    jdn.value = undefined;
+    let response: JdnResponse | undefined;
+    try {
+      response = await ymdToDate(props.calendar, val);
+    } catch (error) {
+      response = undefined;
     }
-
-    return {
-      selectDate,
-      dateParams,
-      jdn,
-      date,
-      YMD,
-      time,
-    };
+    if (val == dateParams.value) {
+      jdn.value = response?.jdn;
+      date.value = response?.date;
+    }
   },
-});
+  { immediate: true, deep: true }
+);
+
+const watchJdn = async (val: number) => {
+  let response: DateResponse | undefined;
+  response = await jdnToDate(props.calendar, val);
+  if (val == jdn.value) {
+    date.value = response.date;
+    const { hours, minutes } = fracToHM(response.frac);
+    YMD.day = response.ymd[2];
+    YMD.month = response.ymd[1];
+    YMD.year = response.ymd[0];
+
+    time.value = `${pad2(hours)}:${pad2(minutes)}`;
+  }
+  return { ...dateParams.value, jdn: val, date: date.value } as {
+    jdn: number;
+    date: string;
+  } & DateParams;
+};
+
+watch(
+  jdn,
+  async (val) => {
+    if (selectDate.value || val == undefined) return;
+    try {
+      await watchJdn(val);
+    } catch {
+      if (val == jdn.value) {
+        YMD.day = undefined;
+        YMD.month = undefined;
+        YMD.year = undefined;
+      }
+    }
+  },
+  { immediate: true }
+);
+
+if (props.startingJdn != undefined) {
+  selectDate.value = false;
+  watchJdn(props.startingJdn)
+    .then((res) => emits("submit", res))
+    .catch()
+    .finally(() => (selectDate.value = true));
+}
 </script>
 
 <style scoped>

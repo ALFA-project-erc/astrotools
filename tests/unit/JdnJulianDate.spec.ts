@@ -41,13 +41,13 @@ describe("JdnJulianDate.vue", () => {
   it("fetches date data from jdn on change", async () => {
     expect(mockedCall).toBeCalledTimes(1);
 
-    expect(wrapper.vm.$data.date).toEqual(data0.date);
-    expect(wrapper.vm.$data.ymd).toEqual("1/02/03");
+    expect(wrapper.vm.date).toEqual(data0.date);
+    expect(wrapper.vm.ymd).toEqual("1/02/03");
 
     await wrapper.setProps({ jdn: 2 });
     await updateAndNext();
-    expect(wrapper.vm.$data.date).toEqual(data1.date);
-    expect(wrapper.vm.$data.ymd).toEqual("2/01/04");
+    expect(wrapper.vm.date).toEqual(data1.date);
+    expect(wrapper.vm.ymd).toEqual("2/01/04");
 
     await wrapper.setProps({ jdn: 2 });
     await updateAndNext();
@@ -55,8 +55,8 @@ describe("JdnJulianDate.vue", () => {
 
     await wrapper.setProps({ jdn: 3 });
     await updateAndNext();
-    expect(wrapper.vm.$data.ymd).toEqual("");
-    expect(wrapper.vm.$data.date).toEqual("");
+    expect(wrapper.vm.ymd).toEqual("");
+    expect(wrapper.vm.date).toEqual("");
   });
 
   it("goes through each state on clicks", async () => {
@@ -66,7 +66,7 @@ describe("JdnJulianDate.vue", () => {
     expect(wrapper.text()).toEqual(wrapper.props("jdn").toString());
 
     await wrapper.find("div").trigger("click");
-    expect(wrapper.text()).toEqual(wrapper.vm.$data.date);
+    expect(wrapper.text()).toEqual(wrapper.vm.date);
 
     await wrapper.find("div").trigger("click");
     expect(wrapper.text()).toEqual("1/02/03");

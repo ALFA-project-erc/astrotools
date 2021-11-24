@@ -10,24 +10,23 @@ describe("SexaDegrees.vue", () => {
   beforeEach(async () => {
     wrapper = shallowMount(SexaDegrees, {
       props: {
-        value: Promise.resolve("3,01;3,14"),
+        value: "3,01;3,14",
       },
     });
     updateAndNext = updateAndNextFactory(wrapper.vm);
-    await updateAndNext();
   });
 
   it("correctly parses", async () => {
     expect(wrapper.vm.sexagesimal).toEqual("03s01° ; 03'14''");
     expect(wrapper.vm.degrees).toEqual("181.05°");
 
-    await wrapper.setProps({ value: Promise.resolve("1,1;30,31") });
+    await wrapper.setProps({ value: "1,1;30,31" });
     await updateAndNext();
 
     expect(wrapper.vm.sexagesimal).toEqual("01s01° ; 30'31''");
     expect(wrapper.vm.degrees).toEqual("61.51°");
 
-    await wrapper.setProps({ value: Promise.resolve("-27 ; 43,07") });
+    await wrapper.setProps({ value: "-27 ; 43,07" });
     await updateAndNext();
 
     expect(wrapper.vm.sexagesimal).toEqual("-27° ; 43'07''");
