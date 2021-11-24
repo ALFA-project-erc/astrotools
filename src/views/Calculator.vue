@@ -64,7 +64,7 @@
   </q-card>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import {
   BasedRealResponse,
   brFromFloat,
@@ -72,78 +72,64 @@ import {
   getCalcCompute,
   getOpenAPISchema,
 } from "@/kanon-api";
-import { defineComponent, onMounted, ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 
-export default defineComponent({
-  setup() {
-    const radices = ref<string[]>([]);
-    const selectedRadix = ref<string | null>(null);
+const radices = ref<string[]>([]);
+const selectedRadix = ref<string | undefined>(undefined);
 
-    onMounted(async () => {
-      radices.value = (
-        await getOpenAPISchema()
-      ).components.schemas.SupportedRadices.enum;
-      selectedRadix.value = radices.value[0];
-    });
+onMounted(async () => {
+  radices.value = (
+    await getOpenAPISchema()
+  ).components.schemas.SupportedRadices.enum;
+  selectedRadix.value = radices.value[0];
+});
 
-    const loading = ref(false);
-    const result = ref<BasedRealResponse>({ value: "", remainder: "" });
-    const query = ref<string>("");
+const loading = ref(false);
+const result = ref<BasedRealResponse>({ value: "", remainder: "" });
+const query = ref<string>("");
 
-    const compute = async () => {
-      if (!selectedRadix.value || !query.value) return;
-      loading.value = true;
-      try {
-        result.value = await getCalcCompute(query.value, selectedRadix.value);
-      } catch (error) {
-        result.value.value = error.response?.data?.detail;
-        result.value.remainder = "";
-      }
-      loading.value = false;
-    };
+const compute = async () => {
+  if (!selectedRadix.value || !query.value) return;
+  loading.value = true;
+  try {
+    result.value = await getCalcCompute(query.value, selectedRadix.value);
+  } catch (error) {
+    result.value.value =
+      (error as { response?: { data?: { detail: string } } }).response?.data
+        ?.detail ?? "";
+    result.value.remainder = "";
+  }
+  loading.value = false;
+};
 
-    const brInput = ref("00 ; 00, 00");
-    const lastBrInput = ref<string | null>(null);
-    const decInput = ref(0);
-    const lastDecInput = ref<number | null>(null);
-    const precision = ref(2);
+const brInput = ref("00 ; 00, 00");
+const lastBrInput = ref<string | undefined>(undefined);
+const decInput = ref(0);
+const lastDecInput = ref<number | undefined>(undefined);
+const precision = ref(2);
 
-    watch(brInput, async (val) => {
-      if (!selectedRadix.value || val == lastBrInput.value) return;
-      try {
-        decInput.value = await brToFloat(selectedRadix.value, val);
-      } catch (error) {
-        console.error(error);
-      }
-      lastDecInput.value = decInput.value;
-      lastBrInput.value = null;
-    });
-    watch(decInput, async (val) => {
-      if (!selectedRadix.value || val == lastDecInput.value) return;
-      try {
-        brInput.value = await brFromFloat(
-          selectedRadix.value,
-          val,
-          precision.value
-        );
-      } catch (error) {
-        console.error(error);
-      }
-      lastBrInput.value = brInput.value;
-      lastDecInput.value = null;
-    });
-
-    return {
-      radices,
-      selectedRadix,
-      loading,
-      result,
-      compute,
-      query,
-      brInput,
-      decInput,
-      precision,
-    };
-  },
+watch(brInput, async (val) => {
+  if (!selectedRadix.value || val == lastBrInput.value) return;
+  try {
+    decInput.value = await brToFloat(selectedRadix.value, val);
+  } catch (error) {
+    console.error(error);
+  }
+  lastDecInput.value = decInput.value;
+  lastBrInput.value = undefined;
+});
+watch(decInput, async (val) => {
+  if (!selectedRadix.value || val == lastDecInput.value) return;
+  try {
+    brInput.value = await brFromFloat(
+      selectedRadix.value,
+      val,
+      precision.value
+    );
+  } catch (error) {
+    console.error(error);
+  }
+  lastBrInput.value = brInput.value;
+  lastDecInput.value = undefined;
 });
 </script>

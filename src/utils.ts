@@ -49,3 +49,11 @@ export const sexaPretty = (sexa: string): string => {
 
   return intParts.join("") + " ; " + floatParts.join("");
 };
+
+export const pad2 = (str: number): string => str.toString().padStart(2, "0");
+
+export const convertFloat = (sexa: {
+  degrees: number;
+  minutes: number;
+}): number =>
+  (Math.abs(sexa.degrees) + sexa.minutes / 60) * Math.sign(sexa.degrees);

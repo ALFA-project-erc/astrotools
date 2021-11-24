@@ -34,19 +34,12 @@
   </q-tabs>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { defineProps } from "vue";
 import { useRouter } from "vue-router";
-export default defineComponent({
-  name: "VerticalTab",
-  props: {
-    mini: Boolean,
-  },
-  setup() {
-    const router = useRouter();
-    return {
-      routeTo: (name: string) => router.push({ name }),
-    };
-  },
-});
+defineProps<{
+  mini: boolean;
+}>();
+const router = useRouter();
+const routeTo = (name: string) => router.push({ name });
 </script>

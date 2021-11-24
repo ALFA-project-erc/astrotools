@@ -132,19 +132,11 @@
   </div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent } from "vue";
+<script setup lang="ts">
+import { computed } from "vue";
 
-export default defineComponent({
-  setup() {
-    const version = computed(() => process.env.VUE_APP_VERSION);
-    const api_url = computed(() => `${process.env.VUE_APP_KANON_API}/docs`);
-    return {
-      version,
-      api_url,
-    };
-  },
-});
+const version = computed(() => process.env.VUE_APP_VERSION);
+const api_url = computed(() => `${process.env.VUE_APP_KANON_API}/docs`);
 </script>
 
 <style lang="scss" scoped>

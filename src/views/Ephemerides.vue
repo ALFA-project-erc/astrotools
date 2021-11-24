@@ -39,7 +39,7 @@
       title="Starting date"
       :caption="stepCaptions[1]"
       icon="today"
-      :done="date !== null"
+      :done="date !== undefined"
       :disable="!planet"
       class="q-pa-sm"
     >
@@ -54,7 +54,7 @@
 
       <q-stepper-navigation>
         <q-btn
-          :disable="date === null"
+          :disable="date === undefined"
           @click="step = 3"
           color="primary"
           label="Continue"
@@ -89,7 +89,7 @@
             type="number"
             filled
             min="1"
-            :rules="[(val) => val >= 1 || 'Invalid']"
+            :rules="[(val: any) => val >= 1 || 'Invalid']"
           />
           <q-input
             label="Step"
@@ -97,13 +97,13 @@
             type="number"
             filled
             min="1"
-            :rules="[(val) => val >= 1 || 'Invalid']"
+            :rules="[(val: any) => val >= 1 || 'Invalid']"
           />
           <q-checkbox left-label v-model="imcceToggle" label="IMCCE Data" />
         </div>
         <q-stepper-navigation>
           <q-btn
-            :disable="step === null || nVal === null"
+            :disable="step === undefined || nVal === undefined"
             @click="onCompute"
             color="primary"
             label="Compute"
@@ -131,113 +131,100 @@
   <PlanetPositionTable :data="positionData" />
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import DatePicker from "@/components/DatePicker.vue";
 import PlanetPositionTable from "@/components/PlanetPositionTable.vue";
 import { Planet } from "@/enums";
 import { EphemeridesResponse, getEphemerides, DateParams } from "@/kanon-api";
-import { capitalize, defineComponent } from "vue";
+import { capitalize, computed, ref } from "vue";
 
 export type EphemeridesInfo = {
   positions: EphemeridesResponse;
   planet: Planet;
 };
 
-export default defineComponent({
-  components: { DatePicker, PlanetPositionTable },
-  data() {
-    return {
-      cBodies: Object.values(Planet),
-      planet: [] as Planet[],
-      date: null as DateParams | null,
-      nValRef: 1,
-      valStepRef: 1,
-      step: 1,
-      positionData: [] as EphemeridesInfo[],
-      loading: false,
-      imcceToggle: false,
-    };
+const cBodies = Object.values(Planet);
+const planet = ref<Planet[]>([]);
+const date = ref<DateParams | undefined>(undefined);
+const nValRef = ref(1);
+const valStepRef = ref(1);
+const step = ref(1);
+const positionData = ref<EphemeridesInfo[]>([]);
+const loading = ref(false);
+const imcceToggle = ref(false);
+
+const valStep = computed({
+  get(): number {
+    return valStepRef.value;
   },
-  methods: {
-    async onCompute(): Promise<void> {
-      if (this.planet.length > 0 && this.date) {
-        this.loading = true;
-        const date = this.date;
-        try {
-          this.positionData = await Promise.all(
-            this.planet.map(async (p) => ({
-              positions: await getEphemerides(
-                p,
-                date,
-                this.nVal,
-                this.valStep,
-                this.imcceToggle
-              ),
-              planet: p,
-            }))
-          );
-        } catch (error) {
-          this.positionData = [];
-        }
-        this.loading = false;
-      }
-    },
-    capitalize,
-    exportCSV() {
-      const csv =
-        `date,${this.positionData.map((p) => p.planet).join(",")}\n` +
-        this.positionData[0].positions
-          .map(
-            (v, idx) =>
-              `${v.jdn},"${this.positionData
-                .map((p) => p.positions[idx].position)
-                .join('","')}"`
-          )
-          .join("\n");
-      const blob = new Blob([csv], {
-        type: "text/csv;charset=utf-8;",
-      });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `ephemerides_${this.date?.year}${this.date?.month}${
-        this.date?.day
-      }_${this.nVal}_${this.valStep}_${this.positionData
-        .map((p) => p.planet)
-        .join("_")}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-    },
-  },
-  computed: {
-    stepCaptions(): string[] {
-      return [
-        this.planet.length == 0
-          ? ""
-          : `${this.planet.map(capitalize).sort().join(", ")}`,
-        this.date === null
-          ? ""
-          : `${this.date.year}/${this.date.month
-              .toString()
-              .padStart(2, "0")}/${this.date.day.toString().padStart(2, "0")}`,
-        `Values : ${this.nVal} | Step : ${this.valStep}`,
-      ];
-    },
-    valStep: {
-      get(): number {
-        return this.valStepRef;
-      },
-      set(val) {
-        if (val >= 1) this.valStepRef = val;
-      },
-    },
-    nVal: {
-      get(): number {
-        return this.nValRef;
-      },
-      set(val) {
-        if (val >= 1) this.nValRef = val;
-      },
-    },
+  set(val: number) {
+    if (val >= 1) valStepRef.value = val;
   },
 });
+const nVal = computed({
+  get(): number {
+    return nValRef.value;
+  },
+  set(val: number) {
+    if (val >= 1) nValRef.value = val;
+  },
+});
+const onCompute = async (): Promise<void> => {
+  if (planet.value.length > 0 && date.value) {
+    loading.value = true;
+    const sDate = date.value;
+    try {
+      positionData.value = await Promise.all(
+        planet.value.map(async (p) => ({
+          positions: await getEphemerides(
+            p,
+            sDate,
+            nVal.value,
+            valStep.value,
+            imcceToggle.value
+          ),
+          planet: p,
+        }))
+      );
+    } catch (error) {
+      positionData.value = [];
+    }
+    loading.value = false;
+  }
+};
+const exportCSV = () => {
+  const csv =
+    `date,${positionData.value.map((p) => p.planet).join(",")}\n` +
+    positionData.value[0].positions
+      .map(
+        (v, idx) =>
+          `${v.jdn},"${positionData.value
+            .map((p) => p.positions[idx].position)
+            .join('","')}"`
+      )
+      .join("\n");
+  const blob = new Blob([csv], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `ephemerides_${date.value?.year}${date.value?.month}${
+    date.value?.day
+  }_${nVal.value}_${valStep.value}_${positionData.value
+    .map((p) => p.planet)
+    .join("_")}.csv`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+};
+const stepCaptions = computed(() => [
+  planet.value.length == 0
+    ? ""
+    : `${planet.value.map(capitalize).sort().join(", ")}`,
+  date.value === undefined
+    ? ""
+    : `${date.value.year}/${date.value.month
+        .toString()
+        .padStart(2, "0")}/${date.value.day.toString().padStart(2, "0")}`,
+  `Values : ${nVal.value} | Step : ${valStep.value}`,
+]);
 </script>

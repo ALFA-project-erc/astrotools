@@ -4,53 +4,39 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-import { sexaPretty, sexaToDecimal, SEXA_REGEX } from "@/utils";
+<script setup lang="ts">
+import { defineProps, ref, watch, withDefaults } from "vue";
+import { sexaPretty, sexaToDecimal } from "@/utils";
 
-export default defineComponent({
-  name: "SexaDegrees",
-  props: {
-    value: {
-      type: [String, Object],
-      required: true,
-      validator: (val: string | Promise<string>) => {
-        if (typeof val === "string")
-          return (
-            SEXA_REGEX.test(val) && val.split(";")[0].split(",").length <= 2
-          );
-        return true;
-      },
-    },
-    showSexaProp: { type: Boolean, default: true },
-  },
-  data() {
-    return {
-      showSexa: true,
-      sexagesimal: "",
-      degrees: "",
-    };
-  },
-  watch: {
-    showSexaProp: {
-      immediate: true,
-      handler(val) {
-        this.showSexa = val;
-      },
-    },
-    value: {
-      immediate: true,
-      async handler(newVal: Promise<string>) {
-        const val = await Promise.resolve(newVal);
+const props = withDefaults(
+  defineProps<{
+    value: string;
+    showSexaProp?: boolean;
+  }>(),
+  { showSexaProp: true }
+);
+const showSexa = ref(props.showSexaProp);
+const sexagesimal = ref("");
+const degrees = ref("");
 
-        const value = sexaToDecimal(val);
-        this.degrees = value.toFixed(2) + "°";
-
-        this.sexagesimal = sexaPretty(val);
-      },
-    },
+watch(
+  () => props.showSexaProp,
+  (show: boolean) => {
+    showSexa.value = show;
   },
-});
+  { immediate: true }
+);
+
+watch(
+  () => props.value,
+  (val: string) => {
+    const value = sexaToDecimal(val);
+    degrees.value = value.toFixed(2) + "°";
+
+    sexagesimal.value = sexaPretty(val);
+  },
+  { immediate: true }
+);
 </script>
 
 <style lang="sass" scoped>

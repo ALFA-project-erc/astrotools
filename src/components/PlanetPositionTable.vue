@@ -56,14 +56,14 @@
             <td class="text-right">
               <SexaDegrees
                 :v-if="pd.positions[idx].imcce !== undefined"
-                :value="pd.positions[idx].imcce"
+                :value="pd.positions[idx].imcce ?? ''"
                 :showSexaProp="showImcce[planetIdx]"
               />
             </td>
             <td class="text-right">
               <SexaDegrees
                 :v-if="pd.positions[idx].diff !== undefined"
-                :value="pd.positions[idx].diff"
+                :value="pd.positions[idx].diff ?? ''"
                 :showSexaProp="showDiff[planetIdx]"
               />
             </td>
@@ -74,52 +74,29 @@
   </q-markup-table>
 </template>
 
-<script lang="ts">
-import {
-  computed,
-  defineComponent,
-  PropType,
-  ref,
-  toRefs,
-  watch,
-  capitalize,
-} from "vue";
+<script setup lang="ts">
+import { computed, ref, toRefs, watch, capitalize, defineProps } from "vue";
 import JdnJulianDate from "@/components/JdnJulianDate.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { EphemeridesInfo } from "@/views/Ephemerides.vue";
 
-export default defineComponent({
-  components: { SexaDegrees, JdnJulianDate },
-  props: {
-    data: {
-      type: Object as PropType<EphemeridesInfo[]>,
-      required: true,
-    },
-  },
-  setup(props) {
-    const data = toRefs(props).data;
+const props = defineProps<{
+  data: EphemeridesInfo[];
+}>();
+const data = toRefs(props).data;
 
-    const showHistorical = ref<boolean[]>([]);
-    const showImcce = ref<boolean[]>([]);
-    const showDiff = ref<boolean[]>([]);
+const showHistorical = ref<boolean[]>([]);
+const showImcce = ref<boolean[]>([]);
+const showDiff = ref<boolean[]>([]);
 
-    watch(data, (val) => {
-      showHistorical.value = val.map(() => true);
-      showImcce.value = [...showHistorical.value];
-      showDiff.value = [...showHistorical.value];
-    });
-
-    const imcceEnabled = computed(
-      () => data.value[0].positions[0].imcce !== undefined
-    );
-    return {
-      showHistorical,
-      showImcce,
-      showDiff,
-      showDate: ref(1),
-      imcceEnabled,
-      capitalize,
-    };
-  },
+watch(data, (val) => {
+  showHistorical.value = val.map(() => true);
+  showImcce.value = [...showHistorical.value];
+  showDiff.value = [...showHistorical.value];
 });
+
+const imcceEnabled = computed(
+  () => data.value[0].positions[0].imcce !== undefined
+);
+const showDate = ref(1);
 </script>

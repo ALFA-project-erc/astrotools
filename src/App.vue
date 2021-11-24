@@ -22,39 +22,25 @@
   </q-layout>
 </template>
 
-<script lang="ts">
-import { defineComponent, onMounted, onUnmounted, ref } from "vue";
+<script setup lang="ts">
+import { onMounted, onUnmounted, ref } from "vue";
 import { watch } from "@vue/runtime-core";
 import VerticalTab from "./components/VerticalTab.vue";
 import { RouteLocation, useRoute } from "vue-router";
 
-export default defineComponent({
-  name: "LayoutDefault",
+const route = useRoute();
+const showDrawer = ref(false);
 
-  setup() {
-    const route = useRoute();
-    const showDrawer = ref(false);
+const mini = ref(false);
 
-    const mini = ref(false);
+const onWidthChange = () => (mini.value = window.innerWidth < 800);
+onMounted(() => window.addEventListener("resize", onWidthChange));
+onUnmounted(() => window.removeEventListener("resize", onWidthChange));
 
-    const onWidthChange = () => (mini.value = window.innerWidth < 800);
-    onMounted(() => window.addEventListener("resize", onWidthChange));
-    onUnmounted(() => window.removeEventListener("resize", onWidthChange));
-
-    watch(
-      route,
-      (route: RouteLocation) => (showDrawer.value = route.name !== "Home")
-    );
-    return {
-      showDrawer,
-      mini,
-    };
-  },
-
-  components: {
-    VerticalTab,
-  },
-});
+watch(
+  route,
+  (route: RouteLocation) => (showDrawer.value = route.name !== "Home")
+);
 </script>
 
 <style>
