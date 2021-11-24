@@ -1,5 +1,6 @@
 <template>
   <q-card class="horoscope-card">
+    <!-- Header -->
     <q-card-section>
       <div class="row q-px-md">
         <div class="text-h6 col">Horoscope</div>
@@ -15,6 +16,7 @@
       </div>
     </q-card-section>
     <q-separator />
+    <!-- Planets -->
     <q-card-section class="row q-px-xl q-pt-lg">
       <q-item
         v-for="pp in positions"
@@ -28,6 +30,7 @@
         />
       </q-item>
     </q-card-section>
+    <!-- Ascendant/House -->
     <q-card-section>
       <q-expansion-item class="q-mx-md" expand-icon-toggle>
         <template v-slot:header>
@@ -59,51 +62,50 @@
       </q-expansion-item>
     </q-card-section>
     <q-separator />
-    <q-card-section>
-      <q-item class="q-mx-md justify-center">
-        <q-item-section class="col-auto">
-          <div class="text-overline">Latitude</div>
-          <div class="row">
-            <q-input
-              label="Degrees"
-              v-model.number="latitude.degrees"
-              filled
-              min="16"
-              max="48"
-              type="number"
-            />
-            <q-input
-              label="Minutes"
-              v-model.number="latitude.minutes"
-              filled
-              min="0"
-              max="59"
-              type="number"
-            />
-          </div>
-        </q-item-section>
-        <q-item-section class="col-auto">
-          <div class="text-overline">Longitude</div>
-          <div class="row">
-            <q-input
-              label="Degrees"
-              v-model.number="longitude.degrees"
-              filled
-              min="-179"
-              max="180"
-              type="number"
-            />
-            <q-input
-              label="Minutes"
-              v-model.number="longitude.minutes"
-              filled
-              min="0"
-              max="59"
-              type="number"
-            />
-          </div>
-        </q-item-section>
-      </q-item>
+    <!-- Ltd/Lng -->
+    <q-card-section class="row q-gutter-md justify-center">
+      <div class="col-auto">
+        <div class="text-overline">Latitude</div>
+        <div class="row">
+          <q-input
+            label="Degrees"
+            v-model.number="latitude.degrees"
+            filled
+            min="16"
+            max="48"
+            type="number"
+          />
+          <q-input
+            label="Minutes"
+            v-model.number="latitude.minutes"
+            filled
+            min="0"
+            max="59"
+            type="number"
+          />
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="text-overline">Longitude</div>
+        <div class="row">
+          <q-input
+            label="Degrees"
+            v-model.number="longitude.degrees"
+            filled
+            min="-179"
+            max="180"
+            type="number"
+          />
+          <q-input
+            label="Minutes"
+            v-model.number="longitude.minutes"
+            filled
+            min="0"
+            max="59"
+            type="number"
+          />
+        </div>
+      </div>
     </q-card-section>
     <q-card-actions align="center">
       <DatePicker
@@ -126,7 +128,7 @@ import PositionDisplay from "@/components/PositionDisplay.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
 import { DateParams, getHouses, getTruePosition } from "@/kanon-api";
-import { convertFloat, pad2 } from "@/utils";
+import { convertFloat, pad2, retrieveFromPromise } from "@/utils";
 import { computed, reactive, ref } from "vue";
 
 const positions = ref(
@@ -161,21 +163,17 @@ const onSubmit = async (
   const housesPromise = getHouses(dateParams, convertFloat(latitude));
   const allPromises = Promise.all(
     positions.value.map(async ({ planet }, idx) => {
-      let mess: string;
-      try {
-        mess = await getTruePosition(planet, dateParams);
-      } catch (error) {
-        mess = "ERROR";
-      }
-      positions.value[idx] = { planet: planet, position: mess };
+      positions.value[idx] = {
+        planet: planet,
+        position: await retrieveFromPromise(
+          getTruePosition(planet, dateParams),
+          "ERROR"
+        ),
+      };
       loading.value += 1;
     })
   );
-  try {
-    houses.value = await housesPromise;
-  } catch (error) {
-    houses.value = ["ERROR"];
-  }
+  houses.value = await retrieveFromPromise(housesPromise, ["ERROR"]);
   loading.value += 1;
   await allPromises;
   loading.value = 8;

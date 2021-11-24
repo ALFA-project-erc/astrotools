@@ -1,6 +1,5 @@
 export const updateAndNextFactory =
-  (vm: { $nextTick: () => Promise<Promise<void>> }) =>
-  async (): Promise<void> => {
+  (vm: { $nextTick: () => Promise<void> }) => async (): Promise<void> => {
     await Promise.resolve();
-    return await vm.$nextTick();
+    return vm.$nextTick();
   };
