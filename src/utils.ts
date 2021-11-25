@@ -57,3 +57,14 @@ export const convertFloat = (sexa: {
   minutes: number;
 }): number =>
   (Math.abs(sexa.degrees) + sexa.minutes / 60) * Math.sign(sexa.degrees);
+
+export const retrieveFromPromise = async function <T>(
+  promise: Promise<T>,
+  errorReturn: T
+): Promise<T> {
+  try {
+    return await promise;
+  } catch (error) {
+    return errorReturn;
+  }
+};
