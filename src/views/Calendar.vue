@@ -16,14 +16,26 @@
       <q-card-section horizontal class="q-px-md q-pb-md" v-show="!infoLoading">
         <q-card-section class="col-6">
           <div class="q-gutter-md">
-            <div>
-              {{ calendarInfos.common_year }} /
-              {{ calendarInfos.leap_year }}
-              <q-item-label caption>Common year / Leap year</q-item-label>
-            </div>
-            <div>
-              {{ calendarInfos.era }}
-              <q-item-label caption>Era starting day</q-item-label>
+            <div class="row">
+              <div class="col-6">
+                <div>
+                  {{ calendarInfos.common_year }} /
+                  {{ calendarInfos.leap_year }}
+                  <q-item-label caption>Common year / Leap year</q-item-label>
+                </div>
+                <div>
+                  {{ calendarInfos.era }}
+                  <q-item-label caption>Era starting day</q-item-label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div>
+                  {{ calendarInfos.cycle[0] }} / {{ calendarInfos.cycle[1] }}
+                  <q-item-label caption
+                    >Cycle (years common / years leap)</q-item-label
+                  >
+                </div>
+              </div>
             </div>
             <q-markup-table separator="cell" flat bordered>
               <thead>
@@ -31,7 +43,9 @@
                   <th class="text-left">#</th>
                   <th class="text-left">Name</th>
                   <th class="text-right">Days Common Year</th>
-                  <th class="text-right">Days Leap Year</th>
+                  <th v-if="calendarInfos.cycle[1] != 0" class="text-right">
+                    Days Leap Year
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -42,7 +56,7 @@
                   <td class="text-left">{{ idx + 1 }}</td>
                   <td class="text-left">{{ month.name }}</td>
                   <td class="text-right">{{ month.days_cy }}</td>
-                  <td class="text-right">
+                  <td v-if="calendarInfos.cycle[1] != 0" class="text-right">
                     {{ month.days_ly === month.days_cy ? "-" : month.days_ly }}
                   </td>
                 </tr>
