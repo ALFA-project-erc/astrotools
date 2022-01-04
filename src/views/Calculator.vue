@@ -61,6 +61,24 @@
         </div>
       </q-card-section>
     </q-card-section>
+    <q-card-section v-if="history.length > 0">
+      <q-markup-table flat bordered>
+        <thead>
+          <tr>
+            <th class="text-left">Query</th>
+            <th class="text-right">Value</th>
+            <th class="text-right">Remainder</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(h, i) in history" :key="i">
+            <td class="text-left">{{ h.query }}</td>
+            <td class="text-right">{{ h.result.value }}</td>
+            <td class="text-right">{{ h.result.remainder }}</td>
+          </tr>
+        </tbody>
+      </q-markup-table>
+    </q-card-section>
   </q-card>
 </template>
 
@@ -88,11 +106,14 @@ const loading = ref(false);
 const result = ref<BasedRealResponse>({ value: "", remainder: "" });
 const query = ref<string>("");
 
+const history = ref<{ query: string; result: BasedRealResponse }[]>([]);
+
 const compute = async () => {
   if (!selectedRadix.value || !query.value) return;
   loading.value = true;
   try {
     result.value = await getCalcCompute(query.value, selectedRadix.value);
+    history.value.push({ query: query.value, result: result.value });
   } catch (error) {
     result.value.value =
       (error as { response?: { data?: { detail: string } } }).response?.data
