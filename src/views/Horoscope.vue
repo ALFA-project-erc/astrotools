@@ -32,34 +32,45 @@
     </q-card-section>
     <!-- Ascendant/House -->
     <q-card-section>
-      <q-expansion-item class="q-mx-md" expand-icon-toggle>
-        <template v-slot:header>
-          <PositionDisplay
-            :loading="false"
-            :position="houses[0]"
-            name="ascendant"
-          />
-          <q-item-section class="col-1"> </q-item-section>
-        </template>
-        <q-card-section class="q-pt-none">
-          <q-list dense>
-            <template v-for="(house, idx) in houses" :key="house">
-              <q-item v-if="idx > 0">
-                <q-item-section class="col-1">
-                  <q-item-label overline>
-                    {{ idx + 1 }}
-                  </q-item-label>
-                </q-item-section>
-                <q-item-section class="col-shrink">
-                  <q-item-label caption>
-                    <SexaDegrees :value="house" />
-                  </q-item-label>
-                </q-item-section>
-              </q-item>
+      <div class="row">
+        <div class="col-xs-12 col-sm-7 col-md-7">
+          <q-expansion-item class="q-mx-md" expand-icon-toggle>
+            <template v-slot:header>
+              <PositionDisplay
+                :loading="false"
+                :position="houses[0]"
+                name="ascendant"
+              />
+              <q-item-section class="col-1"> </q-item-section>
             </template>
-          </q-list>
-        </q-card-section>
-      </q-expansion-item>
+            <q-card-section class="q-pt-none">
+              <q-list dense>
+                <template v-for="(house, idx) in houses" :key="house">
+                  <q-item v-if="idx > 0">
+                    <q-item-section class="col-1">
+                      <q-item-label overline>
+                        {{ idx + 1 }}
+                      </q-item-label>
+                    </q-item-section>
+                    <q-item-section class="col-shrink">
+                      <q-item-label caption>
+                        <SexaDegrees :value="house" />
+                      </q-item-label>
+                    </q-item-section>
+                  </q-item>
+                </template>
+              </q-list>
+            </q-card-section>
+          </q-expansion-item>
+        </div>
+        <div class="col-xs-12 col-sm-5 col-md-5">
+          <q-select
+            v-model="selectedHouseMethod"
+            label="House Calculation Method"
+            :options="houseMethods"
+          />
+        </div>
+      </div>
     </q-card-section>
     <q-separator />
     <!-- Ltd/Lng -->
@@ -127,13 +138,28 @@ import DatePicker from "@/components/DatePicker.vue";
 import PositionDisplay from "@/components/PositionDisplay.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
 import { Planet } from "@/enums";
-import { DateParams, getHouses, getTruePosition } from "@/kanon-api";
+import {
+  DateParams,
+  getHouses,
+  getOpenAPISchema,
+  getTruePosition,
+} from "@/kanon-api";
 import { convertFloat, pad2, retrieveFromPromise } from "@/utils";
-import { computed, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 
 const positions = ref(
   Object.values(Planet).map((p) => ({ planet: p, position: "" }))
 );
+
+const houseMethods = ref<string[]>([]);
+const selectedHouseMethod = ref<string | undefined>("");
+
+onMounted(async () => {
+  houseMethods.value = (
+    await getOpenAPISchema()
+  ).components.schemas.HouseMethods.enum;
+  selectedHouseMethod.value = houseMethods.value[1];
+});
 
 const houses = ref<string[]>([""]);
 const loading = ref(8);
@@ -160,7 +186,11 @@ const onSubmit = async (
 
   const dateParams: DateParams = { day, month, year, hours, minutes };
 
-  const housesPromise = getHouses(dateParams, convertFloat(latitude));
+  const housesPromise = getHouses(
+    dateParams,
+    convertFloat(latitude),
+    selectedHouseMethod.value
+  );
   const allPromises = Promise.all(
     positions.value.map(async ({ planet }, idx) => {
       positions.value[idx] = {
@@ -193,4 +223,6 @@ const dateParts = computed(() => dateRepr.value.split(" in Julian "));
 .horoscope-card
   display: inline-block
   max-width: 33rem
+>>>.ellipsis
+  color: red
 </style>
