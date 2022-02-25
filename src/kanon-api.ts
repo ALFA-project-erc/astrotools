@@ -119,11 +119,12 @@ export const getEphemerides = async (
 
 export const getHouses = async (
   date: DateParams,
-  latitude: number
+  latitude: number,
+  method?: string
 ): Promise<string[]> => {
   const response = (
     await kanonClient.get<string[]>(`ephemerides/houses/`, {
-      params: { ...date, latitude },
+      params: { ...date, latitude, ...(method ? { method } : {}) },
     })
   ).data;
   return response;
@@ -214,6 +215,7 @@ type OpenAPISchema = {
       SupportedRadices: { enum: string[] };
       SupportedCalendars: { enum: string[] };
       Planet: { enum: string[] };
+      HouseMethods: { enum: string[] };
     };
   };
 };
