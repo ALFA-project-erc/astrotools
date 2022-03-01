@@ -223,6 +223,4 @@ const dateParts = computed(() => dateRepr.value.split(" in Julian "));
 .horoscope-card
   display: inline-block
   max-width: 33rem
->>>.ellipsis
-  color: red
 </style>
