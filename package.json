@@ -12,7 +12,7 @@
     "@quasar/extras": "^1.11.1",
     "axios": "^0.24.0",
     "core-js": "^3.21.1",
-    "quasar": "^2.5.3",
+    "quasar": "^2.6.5",
     "vue": "^3.2.31",
     "vue-router": "^4.0.11"
   },
@@ -38,7 +38,7 @@
     "eslint-plugin-vue": "^8.2.0",
     "jest": "^27.5.1",
     "prettier": "^2.5.1",
-    "sass": "^1.49.9",
+    "sass": "^1.50.0",
     "sass-loader": "^10.2.0",
     "ts-jest": "^27.1.3",
     "typescript": "~4.5.5",
