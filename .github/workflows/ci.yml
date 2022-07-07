@@ -38,7 +38,7 @@ jobs:
         run: npm run lint -- --max-warnings 0
         
       - name: Run tests
-        run: npm run test:unit
+        run: npm run test
         
       - name: Run build
         run: npm run build
