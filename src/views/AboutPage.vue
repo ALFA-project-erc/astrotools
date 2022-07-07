@@ -135,8 +135,8 @@
 <script setup lang="ts">
 import { computed } from "vue";
 
-const version = computed(() => process.env.VUE_APP_VERSION);
-const api_url = computed(() => `${process.env.VUE_APP_KANON_API}/docs`);
+const version = computed(() => import.meta.env.VITE_VERSION);
+const api_url = computed(() => `${import.meta.env.VITE_KANON_API}/docs`);
 </script>
 
 <style lang="scss" scoped>

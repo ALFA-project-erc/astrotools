@@ -1,4 +1,4 @@
-process.env.VUE_APP_VERSION = process.env.npm_package_version;
+import.meta.env.VITE_VERSION = import.meta.env.npm_package_version;
 
 module.exports = {
   pluginOptions: {
@@ -8,5 +8,5 @@ module.exports = {
     },
   },
   transpileDependencies: ["quasar"],
-  publicPath: process.env.VUE_APP_PUBLIC_PATH || "/",
+  publicPath: import.meta.env.VITE_PUBLIC_PATH || "/",
 };

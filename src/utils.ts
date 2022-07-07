@@ -69,8 +69,7 @@ export const retrieveFromPromise = async function <T>(
   }
 };
 
-
-export const snakeCaseToTitleCase = (str: string) =>
+export const snakeCaseToTitleCase = (str: string): string =>
   str
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

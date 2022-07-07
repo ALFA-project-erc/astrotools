@@ -78,7 +78,7 @@
 import { computed, ref, toRefs, watch, capitalize, defineProps } from "vue";
 import JdnJulianDate from "@/components/JdnJulianDate.vue";
 import SexaDegrees from "@/components/SexaDegrees.vue";
-import { EphemeridesInfo } from "@/views/Ephemerides.vue";
+import { EphemeridesInfo } from "@/views/EphemeridesPage.vue";
 
 const props = defineProps<{
   data: EphemeridesInfo[];

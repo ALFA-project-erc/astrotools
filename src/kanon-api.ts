@@ -2,7 +2,7 @@ import axios, { AxiosRequestConfig } from "axios";
 import { Planet } from "./enums";
 
 export const kanonClient = axios.create({
-  baseURL: process.env.VUE_APP_KANON_API,
+  baseURL: import.meta.env.VITE_KANON_API,
   timeout: 10000,
 });
 
