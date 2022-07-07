@@ -13,13 +13,13 @@
 
   <q-item-section class="col-shrink">
     <q-item-label>{{ capitalize(name) }}</q-item-label>
-    <q-item-label caption v-if="!loading && position">
-      <SexaDegrees :value="position" v-if="position && position !== 'ERROR'" />
+    <q-item-label v-if="!loading && position" caption>
+      <SexaDegrees v-if="position && position !== 'ERROR'" :value="position" />
       <div v-else style="color: red">
         {{ position }}
       </div>
     </q-item-label>
-    <q-skeleton type="text" v-else square height="18px" width="5rem" />
+    <q-skeleton v-else type="text" square height="18px" width="5rem" />
   </q-item-section>
 </template>
 

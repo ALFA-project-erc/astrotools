@@ -1,46 +1,46 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
-import Home from "../views/Home.vue";
-import Calendar from "../views/Calendar.vue";
-import Calculator from "../views/Calculator.vue";
-import Ephemerides from "../views/Ephemerides.vue";
-import Horoscope from "../views/Horoscope.vue";
-import About from "../views/About.vue";
+import HomePage from "../views/HomePage.vue";
+import CalendarPage from "../views/CalendarPage.vue";
+import CalculatorPage from "../views/CalculatorPage.vue";
+import EphemeridesPage from "../views/EphemeridesPage.vue";
+import HoroscopePage from "../views/HoroscopePage.vue";
+import AboutPage from "../views/AboutPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
     name: "Home",
-    component: Home,
+    component: HomePage,
   },
   {
     path: "/about",
     name: "About",
-    component: About,
+    component: AboutPage,
   },
   {
     path: "/horoscope",
     name: "Horoscope",
-    component: Horoscope,
+    component: HoroscopePage,
   },
   {
     path: "/ephemerides",
     name: "Ephemerides",
-    component: Ephemerides,
+    component: EphemeridesPage,
   },
   {
     path: "/calculator",
     name: "Calculator",
-    component: Calculator,
+    component: CalculatorPage,
   },
   {
     path: "/calendar",
     name: "Calendar",
-    component: Calendar,
+    component: CalendarPage,
   },
 ];
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes,
 });
 

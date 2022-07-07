@@ -2,25 +2,25 @@
   <q-card>
     <q-card-section>
       <q-select
+        v-model="selectedRadix"
         filled
         :options="radices"
         label="Numerical base"
-        v-model="selectedRadix"
       />
     </q-card-section>
     <q-separator />
     <q-card-section horizontal class="q-px-md q-pb-md">
       <q-card-section class="col-6 q-gutter-md">
         <div class="text-subtitle1">Arithmetic operations</div>
-        <q-input label="Query" v-model="query" filled maxlength="40" />
+        <q-input v-model="query" label="Query" filled maxlength="40" />
         <div class="row">
           <q-btn
             type="submit"
             label="Compute"
-            @click="compute"
             color="primary"
             :loading="loading"
             :disable="!query"
+            @click="compute"
           />
           <div class="q-pl-md">
             <div class="text-weight-bold">
@@ -35,27 +35,27 @@
         <div class="row">
           <div class="q-pr-md">
             <q-input
-              :label="selectedRadix"
               v-model="brInput"
+              :label="selectedRadix"
               filled
               debounce="500"
               maxlength="40"
             />
             <q-input
+              v-model.number="precision"
               label="Precision"
               type="number"
               dense
               filled
-              v-model.number="precision"
               max="10"
               min="0"
             />
           </div>
           <q-input
+            v-model.number="decInput"
             label="Decimal"
             debounce="500"
             type="number"
-            v-model.number="decInput"
             filled
           />
         </div>

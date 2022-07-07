@@ -1,9 +1,9 @@
 <template>
   <q-layout view="hHh lpR fFf">
     <q-drawer
+      v-model="showDrawer"
       :breakpoint="10"
       :mini="mini"
-      v-model="showDrawer"
       side="left"
       bordered
     >
@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import { watch } from "@vue/runtime-core";
+import { watch } from "vue";
 import VerticalTab from "./components/VerticalTab.vue";
 import { RouteLocation, useRoute } from "vue-router";
 
