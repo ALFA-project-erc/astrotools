@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
+    "test": "vitest",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix src"
   },
   "dependencies": {
@@ -17,24 +18,22 @@
   },
   "devDependencies": {
     "@quasar/vite-plugin": "^1.0.10",
-    "@types/jest": "^28.0.1",
+    "@typescript-eslint/eslint-plugin": "^5.30.5",
+    "@typescript-eslint/parser": "^5.30.5",
     "@vitejs/plugin-vue": "^2.3.3",
     "@vue/compiler-sfc": "^3.2.31",
     "@vue/eslint-config-prettier": "^7.0.0",
     "@vue/eslint-config-typescript": "^11.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.30.5",
-    "@typescript-eslint/parser": "^5.30.5",
     "@vue/test-utils": "^2.0.2",
-    "@vue/vue3-jest": "^28.0.1",
     "eslint": "^8.19.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-vue": "^9.2.0",
-    "jest": "^28.0.1",
+    "jsdom": "^20.0.0",
     "prettier": "^2.7.1",
     "sass": "^1.51.0",
-    "ts-jest": "^28.0.1",
     "tslib": "^2.4.0",
     "typescript": "~4.5.5",
-    "vite": "^2.9.13"
+    "vite": "^2.9.13",
+    "vitest": "^0.17.1"
   }
 }

@@ -1,12 +1,11 @@
 import { shallowMount, VueWrapper } from "@vue/test-utils";
 import JdnJulianDate from "@/components/JdnJulianDate.vue";
 import { DateResponse, jdnToDate } from "@/kanon-api";
-import { mocked } from "ts-jest/utils";
 import { updateAndNextFactory } from "./utils";
 
-jest.mock("@/kanon-api");
+vi.mock("@/kanon-api");
 
-const mockedCall = mocked(jdnToDate);
+const mockedCall = vi.mocked(jdnToDate);
 
 const data0: DateResponse = {
   date: "date",
