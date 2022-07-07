@@ -2,10 +2,10 @@
   <q-card>
     <q-card-section>
       <q-select
+        v-model="selectedCalendar"
         filled
         :options="calendars"
         label="Calendar"
-        v-model="selectedCalendar"
       />
     </q-card-section>
     <q-separator />
@@ -13,7 +13,7 @@
       <q-spinner-gears size="50px" color="primary" />
     </q-inner-loading>
     <div v-if="calendarInfos">
-      <q-card-section horizontal class="q-px-md q-pb-md" v-show="!infoLoading">
+      <q-card-section v-show="!infoLoading" horizontal class="q-px-md q-pb-md">
         <q-card-section class="col-6">
           <div class="q-gutter-md">
             <div class="row">
@@ -66,24 +66,24 @@
         </q-card-section>
         <q-card-section class="q-gutter-md">
           <q-select
+            v-model="selectedConvertTo"
             outlined
             :options="calendars"
             label="Convert to"
-            v-model="selectedConvertTo"
           />
           <DatePicker
-            :maxDays="maxDays"
-            :maxMonth="maxMonth"
+            :max-days="maxDays"
+            :max-month="maxMonth"
             :calendar="calendarInfos.name"
             :loading="convertLoading"
-            @submit="convert"
             class="col"
+            @submit="convert"
           />
           <q-markup-table
+            v-if="conversionResult"
             separator="vertical"
             flat
             bordered
-            v-if="conversionResult"
           >
             <thead>
               <tr>

@@ -1,10 +1,10 @@
 <template>
   <q-form class="row" @submit="submit">
-    <div class="column" v-if="selectDate">
+    <div v-if="selectDate" class="column">
       <div class="row q-gutter-sm">
         <q-input
-          label="Year"
           v-model.number="YMD.year"
+          label="Year"
           debounce="500"
           type="number"
           filled
@@ -12,8 +12,8 @@
           :rules="[(val: any) => val != undefined || 'Invalid']"
         />
         <q-input
-          label="Month"
           v-model.number="YMD.month"
+          label="Month"
           type="number"
           debounce="500"
           filled
@@ -25,8 +25,8 @@
           ]"
         />
         <q-input
-          label="Day"
           v-model.number="YMD.day"
+          label="Day"
           type="number"
           debounce="500"
           filled
@@ -38,9 +38,9 @@
           ]"
         />
       </div>
-      <div class="row justify-end" v-if="withTime">
-        <q-input filled v-model="time" mask="time" :rules="['time']">
-          <template v-slot:append>
+      <div v-if="withTime" class="row justify-end">
+        <q-input v-model="time" filled mask="time" :rules="['time']">
+          <template #append>
             <q-icon name="access_time" class="cursor-pointer">
               <q-popup-proxy transition-show="scale" transition-hide="scale">
                 <q-time v-model="time" format24h>
@@ -56,9 +56,9 @@
     </div>
     <div v-else>
       <q-input
+        v-model.number="jdn"
         debounce="500"
         label="JDN"
-        v-model.number="jdn"
         type="number"
         step="any"
         filled
@@ -114,7 +114,7 @@ const props = withDefaults(
     startingJdn?: number;
     withTime?: boolean;
   }>(),
-  { withTime: false }
+  { withTime: false, percentage: undefined, startingJdn: undefined }
 );
 
 const emits = defineEmits<{
@@ -173,8 +173,10 @@ watch(
 );
 
 const watchJdn = async (val: number) => {
-  let response: DateResponse | undefined;
-  response = await jdnToDate(props.calendar, val);
+  const response: DateResponse | undefined = await jdnToDate(
+    props.calendar,
+    val
+  );
   if (val == jdn.value) {
     date.value = response.date;
     const { hours, minutes } = fracToHM(response.frac);

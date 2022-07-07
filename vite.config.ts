@@ -20,4 +20,7 @@ export default defineConfig({
       sassVariables: "src/quasar-variables.sass",
     }),
   ],
+  define: {
+    "__APP_VERSION__": JSON.stringify(process.env.npm_package_version),
+  }
 });

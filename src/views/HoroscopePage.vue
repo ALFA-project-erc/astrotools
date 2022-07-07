@@ -48,7 +48,7 @@
       <div class="row">
         <div class="col-xs-12 col-sm-7 col-md-7">
           <q-expansion-item class="q-mx-md" expand-icon-toggle>
-            <template v-slot:header>
+            <template #header>
               <PositionDisplay
                 :loading="false"
                 :position="houses[0]"
@@ -92,16 +92,16 @@
         <div class="text-overline">Latitude</div>
         <div class="row">
           <q-input
-            label="Degrees"
             v-model.number="latitude.degrees"
+            label="Degrees"
             filled
             min="16"
             max="48"
             type="number"
           />
           <q-input
-            label="Minutes"
             v-model.number="latitude.minutes"
+            label="Minutes"
             filled
             min="0"
             max="59"
@@ -113,16 +113,16 @@
         <div class="text-overline">Longitude</div>
         <div class="row">
           <q-input
-            label="Degrees"
             v-model.number="longitude.degrees"
+            label="Degrees"
             filled
             min="-179"
             max="180"
             type="number"
           />
           <q-input
-            label="Minutes"
             v-model.number="longitude.minutes"
+            label="Minutes"
             filled
             min="0"
             max="59"
@@ -136,12 +136,12 @@
         v-if="selectedHouseMethod"
         :loading="loading < 8"
         :percentage="(loading / 8) * 100"
-        :maxDays="31"
-        :maxMonth="12"
-        :startingJdn="jdnToday"
+        :max-days="31"
+        :max-month="12"
+        :starting-jdn="jdnToday"
         calendar="Julian A.D."
+        with-time
         @submit="onSubmit"
-        withTime
       />
     </q-card-actions>
   </q-card>

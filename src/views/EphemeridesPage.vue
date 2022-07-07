@@ -1,5 +1,5 @@
 <template>
-  <q-stepper keep-alive v-model="step" color="primary" animated>
+  <q-stepper v-model="step" keep-alive color="primary" animated>
     <q-step
       :name="1"
       title="Celestial body"
@@ -22,9 +22,9 @@
       <q-stepper-navigation>
         <q-btn
           :disable="!selectedTableSet"
-          @click="step = 2"
           color="primary"
           label="Continue"
+          @click="step = 2"
         />
       </q-stepper-navigation>
     </q-step>
@@ -42,10 +42,10 @@
 
       <div class="col-4">
         <q-select
+          v-model="planet"
           filled
           :options="cBodies"
           :option-label="capitalize"
-          v-model="planet"
           multiple
           clearable
           @clear="planet = []"
@@ -55,16 +55,16 @@
       <q-stepper-navigation>
         <q-btn
           :disable="planet.length === 0"
-          @click="step = 3"
           color="primary"
           label="Continue"
+          @click="step = 3"
         />
         <q-btn
           flat
-          @click="step = 1"
           color="primary"
           label="Back"
           class="q-ml-sm"
+          @click="step = 1"
         />
       </q-stepper-navigation>
     </q-step>
@@ -81,8 +81,8 @@
       <div class="text-subtitle1 q-pb-md">Select a starting date :</div>
 
       <DatePicker
-        :maxDays="31"
-        :maxMonth="12"
+        :max-days="31"
+        :max-month="12"
         calendar="Julian A.D."
         @submit="date = $event"
       />
@@ -90,16 +90,16 @@
       <q-stepper-navigation>
         <q-btn
           :disable="date === undefined"
-          @click="step = 4"
           color="primary"
           label="Continue"
+          @click="step = 4"
         />
         <q-btn
           flat
-          @click="step = 2"
           color="primary"
           label="Back"
           class="q-ml-sm"
+          @click="step = 2"
         />
       </q-stepper-navigation>
     </q-step>
@@ -119,45 +119,45 @@
         </div>
         <div class="row q-gutter-md">
           <q-input
-            label="Number of values"
             v-model.number="nVal"
+            label="Number of values"
             type="number"
             filled
             min="1"
             :rules="[(val: any) => val >= 1 || 'Invalid']"
           />
           <q-input
-            label="Step"
             v-model.number="valStep"
+            label="Step"
             type="number"
             filled
             min="1"
             :rules="[(val: any) => val >= 1 || 'Invalid']"
           />
-          <q-checkbox left-label v-model="imcceToggle" label="IMCCE Data" />
+          <q-checkbox v-model="imcceToggle" left-label label="IMCCE Data" />
         </div>
         <q-stepper-navigation>
           <q-btn
             :disable="step === undefined || nVal === undefined"
-            @click="onCompute"
             color="primary"
             label="Compute"
             :loading="loading"
+            @click="onCompute"
           />
           <q-btn
             flat
-            @click="step = 3"
             color="primary"
             label="Back"
             class="q-ml-sm"
+            @click="step = 3"
           />
           <q-btn
             flat
-            @click="exportCSV()"
             label="export"
             icon="file_download"
             color="secondary"
             :disable="positionData.length == 0"
+            @click="exportCSV()"
           />
         </q-stepper-navigation>
       </div>

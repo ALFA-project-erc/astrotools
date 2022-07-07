@@ -3,8 +3,8 @@
     <q-tab
       :label="mini ? '' : 'Home'"
       icon="home"
-      @click="routeTo('Home')"
       exact
+      @click="routeTo('Home')"
     />
     <q-route-tab
       :label="mini ? '' : 'Horoscope'"
