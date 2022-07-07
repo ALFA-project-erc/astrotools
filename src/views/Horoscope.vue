@@ -16,6 +16,19 @@
       </div>
     </q-card-section>
     <q-separator />
+    <q-card-section>
+      <div class="row q-px-md">
+        <div class="col-12">
+          <q-select
+            v-model="selectedTableSet"
+            :option-label="snakeCaseToTitleCase"
+            label="Table Set"
+            :options="tableSets"
+          />
+        </div>
+      </div>
+    </q-card-section>
+    <q-separator />
     <!-- Planets -->
     <q-card-section class="row q-px-xl q-pt-lg">
       <q-item
@@ -120,6 +133,7 @@
     </q-card-section>
     <q-card-actions align="center">
       <DatePicker
+        v-if="selectedHouseMethod"
         :loading="loading < 8"
         :percentage="(loading / 8) * 100"
         :maxDays="31"
@@ -144,7 +158,12 @@ import {
   getOpenAPISchema,
   getTruePosition,
 } from "@/kanon-api";
-import { convertFloat, pad2, retrieveFromPromise } from "@/utils";
+import {
+  convertFloat,
+  pad2,
+  retrieveFromPromise,
+  snakeCaseToTitleCase,
+} from "@/utils";
 import { computed, onMounted, reactive, ref } from "vue";
 
 const positions = ref(
@@ -152,13 +171,16 @@ const positions = ref(
 );
 
 const houseMethods = ref<string[]>([]);
-const selectedHouseMethod = ref<string | undefined>("");
+const selectedHouseMethod = ref<string>("");
+const tableSets = ref<string[]>([]);
+const selectedTableSet = ref<string>("");
 
 onMounted(async () => {
-  houseMethods.value = (
-    await getOpenAPISchema()
-  ).components.schemas.HouseMethods.enum;
+  const schemas = (await getOpenAPISchema()).components.schemas;
+  houseMethods.value = schemas.HouseMethods.enum;
   selectedHouseMethod.value = houseMethods.value[1];
+  tableSets.value = schemas.TableSets.enum;
+  selectedTableSet.value = tableSets.value[0];
 });
 
 const houses = ref<string[]>([""]);
@@ -187,6 +209,7 @@ const onSubmit = async (
   const dateParams: DateParams = { day, month, year, hours, minutes };
 
   const housesPromise = getHouses(
+    selectedTableSet.value,
     dateParams,
     convertFloat(latitude),
     selectedHouseMethod.value
@@ -196,7 +219,7 @@ const onSubmit = async (
       positions.value[idx] = {
         planet: planet,
         position: await retrieveFromPromise(
-          getTruePosition(planet, dateParams),
+          getTruePosition(selectedTableSet.value, planet, dateParams),
           "ERROR"
         ),
       };

@@ -5,7 +5,35 @@
       title="Celestial body"
       :caption="stepCaptions[0]"
       icon="flare"
-      :done="planet.length > 0 && step > 1"
+      :done="!!selectedTableSet && step > 1"
+      class="q-pa-sm row"
+    >
+      <div class="text-subtitle1 q-pb-md">Select a table set :</div>
+
+      <div class="col-4">
+        <q-select
+          v-model="selectedTableSet"
+          :option-label="snakeCaseToTitleCase"
+          label="Table Set"
+          :options="tableSets"
+        />
+      </div>
+
+      <q-stepper-navigation>
+        <q-btn
+          :disable="!selectedTableSet"
+          @click="step = 2"
+          color="primary"
+          label="Continue"
+        />
+      </q-stepper-navigation>
+    </q-step>
+    <q-step
+      :name="2"
+      title="Celestial body"
+      :caption="stepCaptions[1]"
+      icon="flare"
+      :done="planet.length > 0 && step > 2"
       class="q-pa-sm row"
     >
       <div class="text-subtitle1 q-pb-md">
@@ -27,17 +55,24 @@
       <q-stepper-navigation>
         <q-btn
           :disable="planet.length === 0"
-          @click="step = 2"
+          @click="step = 3"
           color="primary"
           label="Continue"
+        />
+        <q-btn
+          flat
+          @click="step = 1"
+          color="primary"
+          label="Back"
+          class="q-ml-sm"
         />
       </q-stepper-navigation>
     </q-step>
 
     <q-step
-      :name="2"
+      :name="3"
       title="Starting date"
-      :caption="stepCaptions[1]"
+      :caption="stepCaptions[2]"
       icon="today"
       :done="date !== undefined"
       :disable="!planet"
@@ -55,13 +90,13 @@
       <q-stepper-navigation>
         <q-btn
           :disable="date === undefined"
-          @click="step = 3"
+          @click="step = 4"
           color="primary"
           label="Continue"
         />
         <q-btn
           flat
-          @click="step = 1"
+          @click="step = 2"
           color="primary"
           label="Back"
           class="q-ml-sm"
@@ -70,9 +105,9 @@
     </q-step>
 
     <q-step
-      :name="3"
+      :name="4"
       title="Options"
-      :caption="stepCaptions[2]"
+      :caption="stepCaptions[3]"
       icon="assignment"
       :done="positionData.length > 0"
       :disable="!planet || !date"
@@ -111,7 +146,7 @@
           />
           <q-btn
             flat
-            @click="step = 2"
+            @click="step = 3"
             color="primary"
             label="Back"
             class="q-ml-sm"
@@ -135,8 +170,14 @@
 import DatePicker from "@/components/DatePicker.vue";
 import PlanetPositionTable from "@/components/PlanetPositionTable.vue";
 import { Planet } from "@/enums";
-import { EphemeridesResponse, getEphemerides, DateParams } from "@/kanon-api";
-import { capitalize, computed, ref } from "vue";
+import {
+  EphemeridesResponse,
+  getEphemerides,
+  DateParams,
+  getOpenAPISchema,
+} from "@/kanon-api";
+import { snakeCaseToTitleCase } from "@/utils";
+import { capitalize, computed, onMounted, ref } from "vue";
 
 export type EphemeridesInfo = {
   positions: EphemeridesResponse;
@@ -152,6 +193,15 @@ const step = ref(1);
 const positionData = ref<EphemeridesInfo[]>([]);
 const loading = ref(false);
 const imcceToggle = ref(false);
+
+const tableSets = ref<string[]>([]);
+const selectedTableSet = ref<string>("");
+
+onMounted(async () => {
+  const schemas = (await getOpenAPISchema()).components.schemas;
+  tableSets.value = schemas.TableSets.enum;
+  selectedTableSet.value = tableSets.value[0];
+});
 
 const valStep = computed({
   get(): number {
@@ -177,6 +227,7 @@ const onCompute = async (): Promise<void> => {
       positionData.value = await Promise.all(
         planet.value.map(async (p) => ({
           positions: await getEphemerides(
+            selectedTableSet.value,
             p,
             sDate,
             nVal.value,
@@ -217,6 +268,7 @@ const exportCSV = () => {
   URL.revokeObjectURL(link.href);
 };
 const stepCaptions = computed(() => [
+  snakeCaseToTitleCase(selectedTableSet.value),
   planet.value.length == 0
     ? ""
     : `${planet.value.map(capitalize).sort().join(", ")}`,

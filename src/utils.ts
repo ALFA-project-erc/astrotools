@@ -68,3 +68,10 @@ export const retrieveFromPromise = async function <T>(
     return errorReturn;
   }
 };
+
+
+export const snakeCaseToTitleCase = (str: string) =>
+  str
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");

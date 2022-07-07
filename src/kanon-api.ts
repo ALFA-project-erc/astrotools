@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosRequestConfig } from "axios";
 import { Planet } from "./enums";
 
 export const kanonClient = axios.create({
@@ -53,12 +53,19 @@ export type DateParams = {
   minutes?: number;
 };
 
+const ephemerideRequest = <T>(
+  tableSet: string,
+  url: string,
+  config?: AxiosRequestConfig
+) => kanonClient.get<T>(`ephemerides/${tableSet}/${url}`, config);
+
 export const getTruePosition = async (
+  tableSet: string,
   planet: Planet,
   date: DateParams
 ): Promise<string> => {
   const response = (
-    await kanonClient.get<TruePosResponse>(`ephemerides/${planet}/true_pos/`, {
+    await ephemerideRequest<TruePosResponse>(tableSet, `${planet}/true_pos/`, {
       params: date,
     })
   ).data;
@@ -66,6 +73,7 @@ export const getTruePosition = async (
 };
 
 export const getEphemerides = async (
+  tableSet: string,
   planet: Planet,
   date: DateParams,
   nVal: number,
@@ -73,7 +81,7 @@ export const getEphemerides = async (
   imcce: boolean
 ): Promise<EphemeridesResponse> => {
   const kanonRes = (
-    await kanonClient.get<TruePosResponse>(`ephemerides/${planet}/true_pos/`, {
+    await ephemerideRequest<TruePosResponse>(tableSet, `${planet}/true_pos/`, {
       params: {
         ...date,
         number_of_values: nVal,
@@ -118,12 +126,13 @@ export const getEphemerides = async (
 };
 
 export const getHouses = async (
+  tableSet: string,
   date: DateParams,
   latitude: number,
   method?: string
 ): Promise<string[]> => {
   const response = (
-    await kanonClient.get<string[]>(`ephemerides/houses/`, {
+    await ephemerideRequest<string[]>(tableSet, "houses/", {
       params: { ...date, latitude, ...(method ? { method } : {}) },
     })
   ).data;
@@ -216,6 +225,7 @@ type OpenAPISchema = {
       SupportedCalendars: { enum: string[] };
       Planet: { enum: string[] };
       HouseMethods: { enum: string[] };
+      TableSets: { enum: string[] };
     };
   };
 };
